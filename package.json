@@ -1,0 +1,24 @@
+{
+  "name": "sistemas-lineales-iterativos",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "PWA local para resolver sistemas de ecuaciones lineales 3x3 por Jacobi y Gauss-Seidel",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "lucide-react": "^0.544.0",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.1.13",
+    "@vitejs/plugin-react": "^5.0.0",
+    "tailwindcss": "^4.1.13",
+    "vite": "^7.1.0",
+    "vite-plugin-pwa": "^1.0.0"
+  }
+}
