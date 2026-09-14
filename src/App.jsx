@@ -170,64 +170,86 @@ export default function App() {
   return (
     <div className="mx-auto min-h-dvh w-full max-w-7xl px-4 py-6 sm:px-6 sm:py-10">
       {/* ---------------- Encabezado ---------------- */}
-      <header className="mb-6 sm:mb-8">
-        <div className="flex flex-wrap items-center gap-3">
-          <span className="grid size-12 shrink-0 place-items-center rounded-2xl bg-gradient-to-br from-indigo-600 to-cyan-600 text-white shadow-lg shadow-indigo-500/20">
-            <Grid3x3 className="size-6" aria-hidden="true" />
-          </span>
-          <div className="min-w-0 flex-1">
-            <h1 className="bg-gradient-to-r from-indigo-400 to-cyan-400 bg-clip-text text-2xl leading-tight font-black text-transparent sm:text-3xl">
-              Métodos Iterativos 3×3
-            </h1>
-            <p className="text-sm text-slate-400">Sistemas de ecuaciones lineales por Jacobi y Gauss-Seidel</p>
-            <p className="mt-0.5 text-xs tracking-widest text-slate-500 uppercase">
-              FESC · Ingeniería de Software · 2026-2
-            </p>
-          </div>
-          {/* Menú del equipo: se cierra con el propio botón, con Escape
-              o al hacer clic fuera del contenedor referenciado. */}
-          <div ref={teamMenuRef} className="no-print relative shrink-0">
-            <button
-              type="button"
-              onClick={() => setIsTeamMenuOpen((open) => !open)}
-              aria-expanded={isTeamMenuOpen}
-              aria-haspopup="menu"
-              aria-label={isTeamMenuOpen ? 'Cerrar menú del equipo' : 'Abrir menú del equipo'}
-              className="grid size-11 place-items-center rounded-xl border border-white/10 bg-white/5 text-slate-300 backdrop-blur-xl transition hover:border-white/20 hover:bg-white/10 hover:text-slate-100 active:scale-95"
-            >
-              {isTeamMenuOpen ? (
-                <X className="size-5" aria-hidden="true" />
-              ) : (
-                <Menu className="size-5" aria-hidden="true" />
-              )}
-            </button>
-
-            {isTeamMenuOpen ? (
-              <div
-                role="menu"
-                className="animate-fade absolute right-0 z-30 mt-2 w-72 rounded-2xl border border-white/10 bg-slate-800/90 p-4 shadow-2xl shadow-slate-950/60 backdrop-blur-xl"
-              >
-                <p className="mb-3 text-xs font-semibold tracking-wide text-slate-400 uppercase">Equipo</p>
-
-                <ul className="space-y-2.5">
-                  {TEAM.map((member) => (
-                    <li key={member} className="flex items-start gap-2.5 text-sm leading-snug text-slate-200">
-                      <span
-                        className="mt-1.5 size-1.5 shrink-0 rounded-full bg-gradient-to-r from-indigo-400 to-cyan-400"
-                        aria-hidden="true"
-                      />
-                      {member}
-                    </li>
-                  ))}
-                </ul>
-
-                <p className="mt-3.5 border-t border-white/10 pt-3 text-xs text-slate-500">
-                  Métodos Numéricos · Primer Previo · 2026-2
-                </p>
-              </div>
-            ) : null}
-          </div>
+      <header className="relative mb-8 py-8 text-center sm:mb-10 sm:py-12">
+        {/* Halo decorativo detrás del ícono: pura luz de fondo, nunca captura clics. */}
+        <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 top-0 z-0 flex justify-center">
+          <div className="size-64 -translate-y-1/4 rounded-full bg-indigo-500 opacity-20 blur-3xl" />
         </div>
+
+        {/* Menú del equipo: anclado a la esquina para no descentrar el hero.
+            Se cierra con el propio botón, con Escape o al hacer clic fuera.
+            El z-40 mantiene su dropdown por encima del thead sticky de las tablas. */}
+        <div ref={teamMenuRef} className="no-print absolute top-4 right-0 z-40">
+          <button
+            type="button"
+            onClick={() => setIsTeamMenuOpen((open) => !open)}
+            aria-expanded={isTeamMenuOpen}
+            aria-haspopup="menu"
+            aria-label={isTeamMenuOpen ? 'Cerrar menú del equipo' : 'Abrir menú del equipo'}
+            className="grid size-10 place-items-center rounded-xl border border-white/10 bg-white/5 text-slate-300 backdrop-blur-xl transition hover:border-white/20 hover:bg-white/10 hover:text-slate-100 active:scale-95"
+          >
+            {isTeamMenuOpen ? (
+              <X className="size-5" aria-hidden="true" />
+            ) : (
+              <Menu className="size-5" aria-hidden="true" />
+            )}
+          </button>
+
+          {isTeamMenuOpen ? (
+            <div
+              role="menu"
+              className="animate-fade absolute right-0 z-30 mt-2 w-72 rounded-2xl border border-white/10 bg-slate-800/90 p-4 text-left shadow-2xl shadow-slate-950/60 backdrop-blur-xl"
+            >
+              <p className="mb-3 text-xs font-semibold tracking-wide text-slate-400 uppercase">Equipo</p>
+
+              <ul className="space-y-2.5">
+                {TEAM.map((member) => (
+                  <li key={member} className="flex items-start gap-2.5 text-sm leading-snug text-slate-200">
+                    <span
+                      className="mt-1.5 size-1.5 shrink-0 rounded-full bg-gradient-to-r from-indigo-400 to-cyan-400"
+                      aria-hidden="true"
+                    />
+                    {member}
+                  </li>
+                ))}
+              </ul>
+
+              <p className="mt-3.5 border-t border-white/10 pt-3 text-xs text-slate-500">
+                Métodos Numéricos · Primer Previo · 2026-2
+              </p>
+            </div>
+          ) : null}
+        </div>
+
+        {/* Contenido del hero, apilado y centrado sobre el halo. */}
+        <div className="animate-rise relative z-10 flex flex-col items-center">
+          <span className="grid size-16 place-items-center rounded-3xl bg-gradient-to-br from-indigo-600 to-cyan-600 text-white ring-2 shadow-lg ring-indigo-400/30 shadow-indigo-500/20 sm:size-20">
+            <Grid3x3 className="size-8 sm:size-10" aria-hidden="true" />
+          </span>
+
+          <h1 className="mt-5 text-3xl leading-tight font-black text-balance sm:text-5xl">
+            <span className="bg-gradient-to-r from-indigo-400 to-cyan-400 bg-clip-text text-transparent">
+              Métodos Iterativos
+            </span>{' '}
+            <span className="text-cyan-400">3×3</span>
+          </h1>
+
+          <p className="mt-2 max-w-lg text-base text-slate-400 sm:text-lg">
+            Sistemas de ecuaciones lineales por Jacobi y Gauss-Seidel
+          </p>
+
+          {/* El tracking se reduce en móvil para que el chip no desborde
+              pantallas estrechas (a 0.25em el texto supera los 360 px). */}
+          <p className="mt-3 max-w-full rounded-full border border-white/10 px-3 py-1.5 text-[10px] tracking-[0.16em] text-slate-500 uppercase sm:px-4 sm:text-xs sm:tracking-[0.25em]">
+            FESC · Ingeniería de Software · 2026-2
+          </p>
+        </div>
+
+        {/* Separador que cierra el hero y lo despega del contenido. */}
+        <div
+          aria-hidden="true"
+          className="relative z-10 mt-8 h-px bg-gradient-to-r from-transparent via-indigo-500/30 to-transparent"
+        />
       </header>
 
       {/* ---------------- Layout de dos columnas ---------------- */}
