@@ -9,29 +9,29 @@ import { AlertTriangle, CheckCircle2, OctagonAlert } from 'lucide-react';
 const STYLES = {
   ok: {
     icon: CheckCircle2,
-    wrapper: 'border-emerald-200 bg-emerald-50',
-    badge: 'bg-emerald-600 text-white',
-    title: 'text-emerald-900',
-    body: 'text-emerald-800',
-    accent: 'text-emerald-600',
+    wrapper: 'border-emerald-500/20 bg-emerald-500/10',
+    badge: 'bg-emerald-500 text-slate-950',
+    title: 'text-emerald-300',
+    body: 'text-emerald-100/80',
+    accent: 'text-emerald-400',
     label: 'Matriz diagonal dominante',
   },
   warn: {
     icon: AlertTriangle,
-    wrapper: 'border-amber-200 bg-amber-50',
-    badge: 'bg-amber-500 text-white',
-    title: 'text-amber-900',
-    body: 'text-amber-800',
-    accent: 'text-amber-600',
+    wrapper: 'border-amber-500/20 bg-amber-500/10',
+    badge: 'bg-amber-500 text-slate-950',
+    title: 'text-amber-300',
+    body: 'text-amber-100/80',
+    accent: 'text-amber-400',
     label: 'Sin dominancia diagonal',
   },
   error: {
     icon: OctagonAlert,
-    wrapper: 'border-rose-200 bg-rose-50',
-    badge: 'bg-rose-600 text-white',
-    title: 'text-rose-900',
-    body: 'text-rose-800',
-    accent: 'text-rose-600',
+    wrapper: 'border-rose-500/20 bg-rose-500/10',
+    badge: 'bg-rose-500 text-slate-950',
+    title: 'text-rose-300',
+    body: 'text-rose-100/80',
+    accent: 'text-rose-400',
     label: 'Diagonal con ceros',
   },
 };
@@ -48,7 +48,7 @@ export default function DominanceCard({ diagnosis }) {
   const Icon = style.icon;
 
   return (
-    <section className={`animate-rise rounded-2xl border p-4 sm:p-5 ${style.wrapper}`}>
+    <section className={`animate-rise rounded-2xl border p-4 backdrop-blur-xl sm:p-5 ${style.wrapper}`}>
       <div className="flex items-start gap-3">
         <span className={`grid size-9 shrink-0 place-items-center rounded-lg ${style.badge}`}>
           <Icon className="size-5" aria-hidden="true" />
@@ -62,15 +62,15 @@ export default function DominanceCard({ diagnosis }) {
             {diagnosis.rows.map((row) => (
               <li
                 key={row.index}
-                className="flex items-center gap-2 rounded-lg bg-white/70 px-2.5 py-1.5 font-mono text-xs tabular"
+                className="flex items-center gap-2 rounded-lg bg-white/5 px-2.5 py-1.5 font-mono text-xs tabular"
               >
-                <span className={`font-sans font-semibold ${row.ok ? 'text-emerald-600' : 'text-amber-600'}`}>
+                <span className={`font-sans font-semibold ${row.ok ? 'text-emerald-400' : 'text-amber-400'}`}>
                   F{row.index + 1}
                 </span>
-                <span className="text-slate-700">
+                <span className="text-slate-300">
                   {row.diagonal} {row.ok ? '>' : '≤'} {row.sum}
                 </span>
-                <span className={`ml-auto ${row.ok ? 'text-emerald-600' : 'text-amber-600'}`}>
+                <span className={`ml-auto ${row.ok ? 'text-emerald-400' : 'text-amber-400'}`}>
                   {row.ok ? '✓' : '✕'}
                 </span>
               </li>

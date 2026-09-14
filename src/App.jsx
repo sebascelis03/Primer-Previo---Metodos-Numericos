@@ -172,14 +172,17 @@ export default function App() {
       {/* ---------------- Encabezado ---------------- */}
       <header className="mb-6 sm:mb-8">
         <div className="flex flex-wrap items-center gap-3">
-          <span className="grid size-11 shrink-0 place-items-center rounded-2xl bg-slate-900 text-white shadow-sm">
+          <span className="grid size-12 shrink-0 place-items-center rounded-2xl bg-gradient-to-br from-indigo-600 to-cyan-600 text-white shadow-lg shadow-indigo-500/20">
             <Grid3x3 className="size-6" aria-hidden="true" />
           </span>
           <div className="min-w-0 flex-1">
-            <h1 className="text-xl leading-tight font-black text-slate-900 sm:text-2xl">
-              Métodos Iterativos <span className="text-blue-600">3×3</span>
+            <h1 className="bg-gradient-to-r from-indigo-400 to-cyan-400 bg-clip-text text-2xl leading-tight font-black text-transparent sm:text-3xl">
+              Métodos Iterativos 3×3
             </h1>
-            <p className="text-sm text-slate-500">Sistemas de ecuaciones lineales por Jacobi y Gauss-Seidel</p>
+            <p className="text-sm text-slate-400">Sistemas de ecuaciones lineales por Jacobi y Gauss-Seidel</p>
+            <p className="mt-0.5 text-xs tracking-widest text-slate-500 uppercase">
+              FESC · Ingeniería de Software · 2026-2
+            </p>
           </div>
           {/* Menú del equipo: se cierra con el propio botón, con Escape
               o al hacer clic fuera del contenedor referenciado. */}
@@ -190,7 +193,7 @@ export default function App() {
               aria-expanded={isTeamMenuOpen}
               aria-haspopup="menu"
               aria-label={isTeamMenuOpen ? 'Cerrar menú del equipo' : 'Abrir menú del equipo'}
-              className="grid size-11 place-items-center rounded-xl border border-slate-200 bg-white text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 active:scale-95"
+              className="grid size-11 place-items-center rounded-xl border border-white/10 bg-white/5 text-slate-300 backdrop-blur-xl transition hover:border-white/20 hover:bg-white/10 hover:text-slate-100 active:scale-95"
             >
               {isTeamMenuOpen ? (
                 <X className="size-5" aria-hidden="true" />
@@ -202,20 +205,23 @@ export default function App() {
             {isTeamMenuOpen ? (
               <div
                 role="menu"
-                className="animate-rise absolute right-0 z-30 mt-2 w-72 rounded-2xl border border-slate-200 bg-white p-4 shadow-lg shadow-slate-900/5"
+                className="animate-fade absolute right-0 z-30 mt-2 w-72 rounded-2xl border border-white/10 bg-slate-800/90 p-4 shadow-2xl shadow-slate-950/60 backdrop-blur-xl"
               >
-                <p className="mb-3 text-xs font-semibold tracking-wide text-slate-500 uppercase">Equipo</p>
+                <p className="mb-3 text-xs font-semibold tracking-wide text-slate-400 uppercase">Equipo</p>
 
                 <ul className="space-y-2.5">
                   {TEAM.map((member) => (
-                    <li key={member} className="flex items-start gap-2.5 text-sm leading-snug text-slate-700">
-                      <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-blue-500" aria-hidden="true" />
+                    <li key={member} className="flex items-start gap-2.5 text-sm leading-snug text-slate-200">
+                      <span
+                        className="mt-1.5 size-1.5 shrink-0 rounded-full bg-gradient-to-r from-indigo-400 to-cyan-400"
+                        aria-hidden="true"
+                      />
                       {member}
                     </li>
                   ))}
                 </ul>
 
-                <p className="mt-3.5 border-t border-slate-100 pt-3 text-xs text-slate-400">
+                <p className="mt-3.5 border-t border-white/10 pt-3 text-xs text-slate-500">
                   Métodos Numéricos · Primer Previo · 2026-2
                 </p>
               </div>
@@ -253,11 +259,11 @@ export default function App() {
           <DominanceCard diagnosis={diagnosis} />
 
           {errorMessage ? (
-            <div className="animate-rise flex items-start gap-3 rounded-2xl border border-rose-200 bg-rose-50 p-4">
-              <CircleAlert className="mt-0.5 size-5 shrink-0 text-rose-500" aria-hidden="true" />
+            <div className="animate-rise flex items-start gap-3 rounded-2xl border border-rose-500/20 bg-rose-500/10 p-4 backdrop-blur-xl">
+              <CircleAlert className="mt-0.5 size-5 shrink-0 text-rose-400" aria-hidden="true" />
               <div>
-                <p className="text-sm font-bold text-rose-900">No fue posible resolver el sistema</p>
-                <p className="mt-0.5 text-sm text-rose-800">{errorMessage}</p>
+                <p className="text-sm font-bold text-rose-300">No fue posible resolver el sistema</p>
+                <p className="mt-0.5 text-sm text-rose-200/80">{errorMessage}</p>
               </div>
             </div>
           ) : null}
@@ -276,7 +282,7 @@ export default function App() {
             <ResultsTable
               title="Método de Jacobi"
               subtitle="Desplazamientos simultáneos"
-              accent="blue"
+              accent="indigo"
               history={results.jacobi.history}
               summary={results.jacobi.summary}
               residualVector={results.jacobi.residualVector}
@@ -288,7 +294,7 @@ export default function App() {
             <ResultsTable
               title="Método de Gauss-Seidel"
               subtitle="Desplazamientos sucesivos"
-              accent="emerald"
+              accent="cyan"
               history={results.gaussSeidel.history}
               summary={results.gaussSeidel.summary}
               residualVector={results.gaussSeidel.residualVector}
@@ -298,7 +304,7 @@ export default function App() {
         </div>
       </div>
 
-      <footer className="no-print mt-10 border-t border-slate-200 pt-5 text-center text-xs text-slate-400">
+      <footer className="no-print mt-10 border-t border-white/10 pt-5 text-center text-xs text-slate-500">
         <p>
           Métodos Numéricos · Resultados redondeados a 6 cifras decimales · Aplicación instalable que funciona sin
           conexión
