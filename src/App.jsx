@@ -1,5 +1,5 @@
-import { useMemo, useState } from 'react';
-import { CircleAlert, Grid3x3, WifiOff } from 'lucide-react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { CircleAlert, Grid3x3, Menu, X } from 'lucide-react';
 import MatrixInput from './components/MatrixInput.jsx';
 import DominanceCard from './components/DominanceCard.jsx';
 import ResultsTable from './components/ResultsTable.jsx';
@@ -12,6 +12,13 @@ import {
   solveJacobi,
   summarize,
 } from './utils/numericalMethods.js';
+
+/** Integrantes del equipo, mostrados en el menú del encabezado. */
+const TEAM = [
+  'Andres Esteban Sandoval Carreño',
+  'Jhoan Sebastian Celis Pabon',
+  'Zharick Nicoll Acevedo Ascanio',
+];
 
 /** Sistema de ejemplo: diagonal dominante, solución exacta (2, 4, 3). */
 const EXAMPLE = {
@@ -52,6 +59,29 @@ export default function App() {
 
   const [results, setResults] = useState(null);
   const [errorMessage, setErrorMessage] = useState('');
+
+  const [isTeamMenuOpen, setIsTeamMenuOpen] = useState(false);
+  const teamMenuRef = useRef(null);
+
+  /** Cierra el menú del equipo al hacer clic fuera de él o al presionar Escape. */
+  useEffect(() => {
+    if (!isTeamMenuOpen) return undefined;
+
+    const handlePointerDown = (event) => {
+      if (!teamMenuRef.current?.contains(event.target)) setIsTeamMenuOpen(false);
+    };
+    const handleKeyDown = (event) => {
+      if (event.key === 'Escape') setIsTeamMenuOpen(false);
+    };
+
+    document.addEventListener('pointerdown', handlePointerDown);
+    document.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      document.removeEventListener('pointerdown', handlePointerDown);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isTeamMenuOpen]);
 
   /** Diagnóstico de dominancia diagonal, recalculado al editar la matriz. */
   const diagnosis = useMemo(() => {
@@ -151,10 +181,46 @@ export default function App() {
             </h1>
             <p className="text-sm text-slate-500">Sistemas de ecuaciones lineales por Jacobi y Gauss-Seidel</p>
           </div>
-          <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700">
-            <WifiOff className="size-3.5" aria-hidden="true" />
-            100% local
-          </span>
+          {/* Menú del equipo: se cierra con el propio botón, con Escape
+              o al hacer clic fuera del contenedor referenciado. */}
+          <div ref={teamMenuRef} className="no-print relative shrink-0">
+            <button
+              type="button"
+              onClick={() => setIsTeamMenuOpen((open) => !open)}
+              aria-expanded={isTeamMenuOpen}
+              aria-haspopup="menu"
+              aria-label={isTeamMenuOpen ? 'Cerrar menú del equipo' : 'Abrir menú del equipo'}
+              className="grid size-11 place-items-center rounded-xl border border-slate-200 bg-white text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 active:scale-95"
+            >
+              {isTeamMenuOpen ? (
+                <X className="size-5" aria-hidden="true" />
+              ) : (
+                <Menu className="size-5" aria-hidden="true" />
+              )}
+            </button>
+
+            {isTeamMenuOpen ? (
+              <div
+                role="menu"
+                className="animate-rise absolute right-0 z-30 mt-2 w-72 rounded-2xl border border-slate-200 bg-white p-4 shadow-lg shadow-slate-900/5"
+              >
+                <p className="mb-3 text-xs font-semibold tracking-wide text-slate-500 uppercase">Equipo</p>
+
+                <ul className="space-y-2.5">
+                  {TEAM.map((member) => (
+                    <li key={member} className="flex items-start gap-2.5 text-sm leading-snug text-slate-700">
+                      <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-blue-500" aria-hidden="true" />
+                      {member}
+                    </li>
+                  ))}
+                </ul>
+
+                <p className="mt-3.5 border-t border-slate-100 pt-3 text-xs text-slate-400">
+                  Métodos Numéricos · Primer Previo · 2026-2
+                </p>
+              </div>
+            ) : null}
+          </div>
         </div>
       </header>
 
