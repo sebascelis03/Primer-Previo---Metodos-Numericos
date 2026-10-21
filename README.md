@@ -1,63 +1,35 @@
-# Métodos Iterativos 3×3 — Jacobi & Gauss-Seidel
+# Métodos Numéricos — FESC 2026-2
 
-PWA de funcionamiento estrictamente local para resolver sistemas de ecuaciones lineales de 3×3
-mediante los métodos iterativos de **Jacobi** y **Gauss-Seidel**.
+Plataforma PWA local y responsiva desarrollada para la asignatura de **Métodos Numéricos** (Ingeniería de Software · FESC).
 
-No realiza ninguna petición de red en tiempo de ejecución: todo el cálculo ocurre en el navegador
-y el service worker precachea el shell completo para uso sin conexión.
+No realiza ninguna petición de red en tiempo de ejecución: todo el cálculo ocurre en el navegador y el service worker precachea el shell completo para uso sin conexión.
 
-## Stack
+---
 
-| Capa      | Tecnología                     |
-| --------- | ------------------------------ |
-| Frontend  | React 19 + Vite 7              |
-| Estilos   | Tailwind CSS 4 (`@tailwindcss/vite`) |
-| Iconos    | `lucide-react`                 |
-| PWA       | `vite-plugin-pwa` (Workbox)    |
+## Módulos y Contenido Académico
 
-## Uso
+### 🔹 Previo 1: Sistemas de Ecuaciones Lineales 3×3
+- **Métodos**: Jacobi y Gauss-Seidel.
+- **Modo Duelo**: Comparativa directa de velocidad y convergencia.
+- **Diagnóstico matricial**: Verificación de dominancia diagonal estricta $|a_{ii}| > \sum_{j \ne i} |a_{ij}|$ y ceros en diagonal.
+- **Comprobación**: Vector residual $r = b - A \cdot x$.
 
-```bash
-npm install      # instalar dependencias
-npm run dev      # servidor de desarrollo -> http://localhost:5173
-npm run build    # build de producción en dist/
-npm run preview  # servir el build localmente (permite instalar la PWA)
-```
+### 🔹 Previo 2: Ecuaciones No Lineales y Raíces de Polinomios
+- **1. Iterativo Secuencial (Punto Fijo)**: Resuelve $x = g(x)$ paso a paso con error relativo $\varepsilon_a$.
+- **2. Método de Newton-Raphson**: Resuelve $f(x) = 0$ con soporte de derivada automática o analítica/manual.
+- **3. Método de Bairstow**: Extracción de **todas las raíces (reales y complejas)** de polinomios de grado 2 a 5 mediante factores cuadráticos $x^2 - rx - s$ y deflación sucesiva.
 
-> El service worker solo se activa sobre el build (`npm run build` + `npm run preview`),
-> no en modo desarrollo.
+---
 
-## Estructura
+## Stack Tecnológico
 
-```
-src/
-├── App.jsx                        Estado global (matriz, parámetros, resultados) con useState
-├── main.jsx                       Punto de entrada + registro del service worker
-├── index.css                      Tailwind, tokens de tema y clases de componente
-├── components/
-│   ├── MatrixInput.jsx            Matriz aumentada [A|b], parámetros y botones de acción
-│   ├── DominanceCard.jsx          Alerta de dominancia diagonal (verde / ámbar / rojo)
-│   ├── ResultsTable.jsx           Tabla k | x₁ | x₂ | x₃ | Error (%) + solución
-│   ├── DuelCard.jsx               Modo Duelo: comparativa Jacobi vs. Gauss-Seidel
-│   └── EmptyState.jsx             Recordatorio de fórmulas antes del primer cálculo
-└── utils/
-    └── numericalMethods.js        Motor matemático (funciones puras)
-```
-
-## Motor matemático (`src/utils/numericalMethods.js`)
-
-Todas las funciones son puras: no mutan sus argumentos ni dependen de estado externo.
-
-### `solveJacobi(A, b, x0, tolerance, maxIterations)`
-
-### `solveGaussSeidel(A, b, x0, tolerance, maxIterations)`
-
-| Parámetro       | Tipo         | Por defecto | Descripción                              |
-| --------------- | ------------ | ----------- | ---------------------------------------- |
-| `A`             | `number[][]` | —           | Matriz de coeficientes 3×3               |
-| `b`             | `number[]`   | —           | Vector de términos independientes        |
-| `x0`            | `number[]`   | `[0,0,0]`   | Vector inicial                           |
-| `tolerance`     | `number`     | `0.001`     | Tolerancia sobre el error relativo **porcentual** |
+| Capa        | Tecnología                                    |
+| ----------- | --------------------------------------------- |
+| Frontend    | React 19 + Vite 7                             |
+| Estilos     | Tailwind CSS 4 (`@tailwindcss/vite`)          |
+| Componentes | Lucide React + Glassmorphism UI Dark Mode     |
+| PWA         | `vite-plugin-pwa` (Workbox offline completo)  |
+| Matemáticas | Evaluador por descenso recursivo (sin `eval`) |
 | `maxIterations` | `number`     | `50`        | Corte de seguridad                       |
 
 Ambas devuelven un arreglo de objetos, uno por iteración:

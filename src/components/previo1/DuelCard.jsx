@@ -1,5 +1,5 @@
 import { Crown, Gauge, Minus, Swords, Trophy, XCircle } from 'lucide-react';
-import { DECIMALS } from '../utils/numericalMethods.js';
+import { DECIMALS } from '../../utils/numericalMethods.js';
 
 const fmt = (value) => (Number.isFinite(value) ? value.toFixed(DECIMALS) : '∞');
 

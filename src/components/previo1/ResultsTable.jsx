@@ -1,5 +1,5 @@
 import { CircleAlert, CircleCheckBig, TrendingDown, TriangleAlert } from 'lucide-react';
-import { DECIMALS } from '../utils/numericalMethods.js';
+import { DECIMALS } from '../../utils/numericalMethods.js';
 
 const ACCENTS = {
   indigo: {

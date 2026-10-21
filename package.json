@@ -3,7 +3,7 @@
   "private": true,
   "version": "1.0.0",
   "type": "module",
-  "description": "PWA local para resolver sistemas de ecuaciones lineales 3x3 por Jacobi y Gauss-Seidel",
+  "description": "Plataforma PWA para Métodos Numéricos: Previo 1 (Sistemas Lineales 3x3) y Previo 2 (Ecuaciones No Lineales y Bairstow)",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
