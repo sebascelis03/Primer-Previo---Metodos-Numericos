@@ -181,7 +181,7 @@ export default function Previo1View() {
       </div>
 
       {/* Panel de resultados */}
-      <div className="flex flex-col gap-5">
+      <div className="flex flex-col gap-5" data-tour="p1-results">
         <DominanceCard
           diagnosis={diagnosis}
           matrixNum={matrixNum}

@@ -33,8 +33,10 @@ const METHODS = [
  * Vista del Segundo Previo: raíces de ecuaciones no lineales y polinomios.
  * Agrupa las tres calculadoras tras una barra de pestañas secundarias.
  */
-export default function Previo2View() {
-  const [activeMethod, setActiveMethod] = useState(METHODS[0].id);
+export default function Previo2View({ activeMethod: controlledMethod, onMethodChange }) {
+  const [internalMethod, setInternalMethod] = useState(METHODS[0].id);
+  const activeMethod = controlledMethod ?? internalMethod;
+  const setActiveMethod = onMethodChange ?? setInternalMethod;
 
   const active = METHODS.find((method) => method.id === activeMethod) ?? METHODS[0];
   const ActiveCalculator = active.Calculator;
@@ -44,6 +46,7 @@ export default function Previo2View() {
       {/* ---------------- Pestañas de método ---------------- */}
       <nav
         aria-label="Método numérico"
+        data-tour="p2-tabs"
         className="no-print card grid grid-cols-1 gap-1.5 p-1.5 sm:grid-cols-3"
       >
         {METHODS.map((method) => {

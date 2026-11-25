@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
-import { Menu, X } from 'lucide-react';
+import { Lightbulb, Menu, X } from 'lucide-react';
 import Previo1View from './components/previo1/Previo1View.jsx';
 import Previo2View from './components/previo2/Previo2View.jsx';
+import GuidedTourModal from './components/GuidedTourModal.jsx';
 
 /** Integrantes del equipo, mostrados en el menú del encabezado. */
 const TEAM = [
@@ -22,7 +23,6 @@ const PREVIOS = [
     menuCaption: 'Primer Previo',
     title: 'Métodos Iterativos 3×3',
     subtitle: 'Sistemas de ecuaciones lineales por Jacobi y Gauss-Seidel',
-    View: Previo1View,
   },
   {
     id: 'previo-2',
@@ -31,12 +31,13 @@ const PREVIOS = [
     menuCaption: 'Segundo Previo',
     title: 'Ecuaciones No Lineales y Polinomios',
     subtitle: 'Iterativo Secuencial, Newton-Raphson y Método de Bairstow',
-    View: Previo2View,
   },
 ];
 
 export default function App() {
   const [activePrevio, setActivePrevio] = useState(PREVIOS[0].id);
+  const [previo2Method, setPrevio2Method] = useState('fixed-point');
+  const [isTourOpen, setIsTourOpen] = useState(false);
   const [isTeamMenuOpen, setIsTeamMenuOpen] = useState(false);
   const teamMenuRef = useRef(null);
 
@@ -61,14 +62,14 @@ export default function App() {
   }, [isTeamMenuOpen]);
 
   const previo = PREVIOS.find((item) => item.id === activePrevio) ?? PREVIOS[0];
-  const ActiveView = previo.View;
+  const activeTourKey = previo.id === 'previo-1' ? 'previo-1' : previo2Method;
 
   return (
     <div className="mx-auto min-h-dvh w-full max-w-7xl px-4 py-5 sm:px-6 sm:py-6">
-      {/* ---------------- Encabezado limpio y sobrio ---------------- */}
+      {/* ---------------- Encabezado limpio con Previos centrados ---------------- */}
       <header className="relative z-30 mb-6 border-b border-white/10 pb-4">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-          {/* Izquierda: Tipografía limpia sin ícono IA ni píldoras */}
+        <div className="flex flex-col gap-4 lg:grid lg:grid-cols-[1fr_auto_1fr] lg:items-center">
+          {/* Izquierda: Tipografía limpia */}
           <div className="min-w-0">
             <p className="text-[11px] font-semibold tracking-[0.18em] text-slate-500 uppercase">
               Métodos Numéricos · FESC 2026-2
@@ -79,37 +80,52 @@ export default function App() {
             <p className="mt-0.5 text-xs text-slate-400 sm:text-sm">{previo.subtitle}</p>
           </div>
 
-          {/* Derecha: Selector de Previo + Botón Menú del Equipo */}
-          <div className="no-print flex items-center gap-2.5">
-            <nav
-              aria-label="Previo"
-              className="grid flex-1 grid-cols-2 gap-1 rounded-xl border border-white/10 bg-white/[0.03] p-1 lg:w-72 lg:flex-none"
+          {/* Centro: Selector de Previo centrado */}
+          <nav
+            aria-label="Previo"
+            className="no-print mx-auto grid w-full max-w-xs grid-cols-2 gap-1 rounded-xl border border-white/10 bg-white/[0.03] p-1 sm:w-72"
+          >
+            {PREVIOS.map((item) => {
+              const isActive = item.id === previo.id;
+
+              return (
+                <button
+                  key={item.id}
+                  type="button"
+                  aria-current={isActive ? 'page' : undefined}
+                  onClick={() => setActivePrevio(item.id)}
+                  className={`rounded-lg px-3 py-1.5 text-center transition-all active:scale-[0.98] ${
+                    isActive
+                      ? 'bg-gradient-to-r from-indigo-600 to-cyan-600 text-white shadow shadow-indigo-500/20'
+                      : 'text-slate-400 hover:bg-white/5 hover:text-slate-200'
+                  }`}
+                >
+                  <span className="block text-xs font-bold leading-tight">{item.tab}</span>
+                  <span className={`block truncate text-[10px] ${isActive ? 'text-white/80' : 'text-slate-500'}`}>
+                    {item.tabCaption}
+                  </span>
+                </button>
+              );
+            })}
+          </nav>
+
+          {/* Derecha: Botón Bombillo (Guía paso a paso) + Menú Hamburguesa del Equipo */}
+          <div className="no-print flex items-center justify-end gap-2 lg:justify-self-end">
+            <button
+              type="button"
+              onClick={() => setIsTourOpen((open) => !open)}
+              aria-pressed={isTourOpen}
+              title="Recorrido guiado paso a paso de esta calculadora"
+              aria-label="Iniciar recorrido guiado paso a paso"
+              className={`grid size-10 place-items-center rounded-xl border transition active:scale-95 ${
+                isTourOpen
+                  ? 'border-amber-400/60 bg-amber-400/20 text-amber-300 shadow-md shadow-amber-500/20'
+                  : 'border-amber-400/30 bg-amber-400/10 text-amber-300 hover:border-amber-400/50 hover:bg-amber-400/20'
+              }`}
             >
-              {PREVIOS.map((item) => {
-                const isActive = item.id === previo.id;
+              <Lightbulb className="size-4 fill-amber-300/35" aria-hidden="true" />
+            </button>
 
-                return (
-                  <button
-                    key={item.id}
-                    type="button"
-                    aria-current={isActive ? 'page' : undefined}
-                    onClick={() => setActivePrevio(item.id)}
-                    className={`rounded-lg px-3 py-1.5 text-left transition-all active:scale-[0.98] ${
-                      isActive
-                        ? 'bg-gradient-to-r from-indigo-600 to-cyan-600 text-white shadow shadow-indigo-500/20'
-                        : 'text-slate-400 hover:bg-white/5 hover:text-slate-200'
-                    }`}
-                  >
-                    <span className="block text-xs font-bold leading-tight">{item.tab}</span>
-                    <span className={`block truncate text-[10px] ${isActive ? 'text-white/80' : 'text-slate-500'}`}>
-                      {item.tabCaption}
-                    </span>
-                  </button>
-                );
-              })}
-            </nav>
-
-            {/* Menú desplegable del equipo */}
             <div ref={teamMenuRef} className="relative shrink-0">
               <button
                 type="button"
@@ -156,7 +172,14 @@ export default function App() {
       </header>
 
       {/* ---------------- Vista activa ---------------- */}
-      <ActiveView />
+      {previo.id === 'previo-1' ? (
+        <Previo1View />
+      ) : (
+        <Previo2View activeMethod={previo2Method} onMethodChange={setPrevio2Method} />
+      )}
+
+      {/* ---------------- Recorrido Guiado Contextual (Bombillo) ---------------- */}
+      <GuidedTourModal isOpen={isTourOpen} tourKey={activeTourKey} onClose={() => setIsTourOpen(false)} />
 
       <footer className="no-print mt-8 border-t border-white/10 pt-4 text-center text-xs text-slate-500">
         <p>

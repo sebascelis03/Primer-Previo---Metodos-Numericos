@@ -428,6 +428,15 @@
   .math-key-danger {
     @apply hover:border-rose-500/40 hover:bg-rose-500/15 hover:text-rose-200;
   }
+  /* Resaltado suave de la sección activa durante el recorrido guiado (bombillo). */
+  .tour-highlight {
+    position: relative;
+    border-radius: 1rem;
+    box-shadow:
+      0 0 0 2px rgb(251 191 36 / 0.8),
+      0 0 24px -4px rgb(251 191 36 / 0.35);
+    transition: box-shadow 0.25s ease;
+  }
 }
 
 @keyframes slot-pulse {

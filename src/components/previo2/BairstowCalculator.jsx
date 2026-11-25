@@ -218,7 +218,7 @@ export default function BairstowCalculator() {
       </header>
 
       {/* ---------------- Grado del polinomio ---------------- */}
-      <div className="mb-5">
+      <div className="mb-5" data-tour="bw-degree">
         <span className="mb-1.5 block text-xs font-semibold tracking-wide text-slate-400 uppercase">
           Grado del polinomio
         </span>
@@ -245,7 +245,7 @@ export default function BairstowCalculator() {
       </div>
 
       {/* ---------------- Coeficientes ---------------- */}
-      <div className="mb-5">
+      <div className="mb-5" data-tour="bw-coeffs">
         <div className="mb-2 flex items-baseline justify-between gap-2">
           <span className="text-xs font-semibold tracking-wide text-slate-400 uppercase">Coeficientes</span>
           <span className="font-mono text-xs text-slate-500">aₙ … a₀</span>
@@ -295,7 +295,7 @@ export default function BairstowCalculator() {
       </div>
 
       {/* ---------------- Valores iniciales y corte ---------------- */}
-      <div className="mb-5 grid gap-4 sm:grid-cols-2">
+      <div className="mb-5 grid gap-4 sm:grid-cols-2" data-tour="bw-initial">
         <NumberField id="bw-r0" label="Valor inicial r₀" value={r0} onChange={setR0} hint="Aproximación inicial de r." />
         <NumberField id="bw-s0" label="Valor inicial s₀" value={s0} onChange={setS0} hint="Aproximación inicial de s." />
       </div>

@@ -1,4 +1,4 @@
 # Tarea Activa
 
-- **Recién completado:** `PLAN_06_HEADER_SOBRIO.md` — Header sobrio y limpio sin caja ni íconos/gradientes tipo plantilla IA en `src/App.jsx`.
-- **Próximo paso:** En espera de validación visual del usuario.
+- **Recién completado:** `PLAN_07_TOUR_GUIADO_Y_HEADER_CENTRADO.md` — Botones de Previos centrados en el header y botón de bombillo encendido con recorrido paso a paso contextual no invasivo.
+- **Próximo paso:** En espera de validación del usuario.

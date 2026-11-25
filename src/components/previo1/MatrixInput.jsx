@@ -47,7 +47,7 @@ export default function MatrixInput({
       </header>
 
       {/* ---------------- Matriz aumentada [A | b] ---------------- */}
-      <div className="mb-6">
+      <div className="mb-6" data-tour="p1-matrix">
         <div className="mb-2 flex items-baseline justify-between">
           <span className="text-xs font-semibold tracking-wide text-slate-400 uppercase">Matriz aumentada</span>
           <span className="font-mono text-xs text-slate-500">A · x = b</span>
@@ -121,7 +121,7 @@ export default function MatrixInput({
       </div>
 
       {/* ---------------- Parámetros ---------------- */}
-      <div className="mb-6 grid gap-4 sm:grid-cols-2">
+      <div className="mb-6 grid gap-4 sm:grid-cols-2" data-tour="p1-params">
         <div>
           <label htmlFor="tolerance" className="mb-1.5 block text-xs font-semibold tracking-wide text-slate-400 uppercase">
             Tolerancia (% error)
@@ -184,7 +184,7 @@ export default function MatrixInput({
       </div>
 
       {/* ---------------- Acciones ---------------- */}
-      <div className="grid gap-2.5 sm:grid-cols-2">
+      <div className="grid gap-2.5 sm:grid-cols-2" data-tour="p1-actions">
         <button
           type="button"
           disabled={isBusy}

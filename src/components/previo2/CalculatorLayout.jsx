@@ -14,7 +14,9 @@ export default function CalculatorLayout({ inputs, results }) {
         {inputs}
       </div>
 
-      <div className="flex min-w-0 flex-col gap-5">{results}</div>
+      <div className="flex min-w-0 flex-col gap-5" data-tour="p2-results">
+        {results}
+      </div>
     </div>
   );
 }

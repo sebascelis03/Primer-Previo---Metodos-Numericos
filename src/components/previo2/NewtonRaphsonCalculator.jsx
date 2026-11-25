@@ -133,7 +133,7 @@ export default function NewtonRaphsonCalculator() {
         />
 
         {/* Interruptor entre derivada numérica y derivada analítica. */}
-        <div className="rounded-xl border border-white/10 bg-slate-900/40 p-3.5">
+        <div className="rounded-xl border border-white/10 bg-slate-900/40 p-3.5" data-tour="nr-derivative">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
               <p className="text-sm font-semibold text-slate-200">Calcular derivada automáticamente</p>

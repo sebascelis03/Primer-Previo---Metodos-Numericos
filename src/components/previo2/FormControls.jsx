@@ -143,6 +143,7 @@ export function ExpressionField({
 
       {/* Pantalla unificada Photomath: Display 2D interactivo arriba + barra de entrada sincronizada abajo */}
       <div
+        data-tour="p2-expression"
         className={`overflow-hidden rounded-2xl border transition focus-within:ring-2 ${DISPLAY_TONE[status.state]}`}
       >
         {/* Barra de estado del visor matemático */}
@@ -219,7 +220,7 @@ export function ExpressionField({
 
       {/* Teclado Photomath de doble panel */}
       {isKeypadOpen ? (
-        <div id={`${id}-keypad`} className="animate-fade mt-3">
+        <div id={`${id}-keypad`} data-tour="p2-keypad" className="animate-fade mt-3">
           <MathKeypad onEdit={applyEdit} />
         </div>
       ) : null}
@@ -284,7 +285,7 @@ export function NumberField({ id, label, value, onChange, hint, integer = false,
  */
 export function StopCriteriaFields({ idPrefix, tolerance, maxIterations, onToleranceChange, onMaxIterationsChange }) {
   return (
-    <div className="grid gap-4 sm:grid-cols-2">
+    <div className="grid gap-4 sm:grid-cols-2" data-tour="p2-stop">
       <NumberField
         id={`${idPrefix}-tolerance`}
         label="Tolerancia (% error)"
