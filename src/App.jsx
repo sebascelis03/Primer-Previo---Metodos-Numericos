@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
-import { Lightbulb, Menu, X } from 'lucide-react';
+import { BookOpen, Lightbulb, Menu, X } from 'lucide-react';
 import Previo1View from './components/previo1/Previo1View.jsx';
 import Previo2View from './components/previo2/Previo2View.jsx';
 import GuidedTourModal from './components/GuidedTourModal.jsx';
+import ManualsView from './components/manuals/ManualsView.jsx';
 
 /** Integrantes del equipo, mostrados en el menú del encabezado. */
 const TEAM = [
@@ -37,6 +38,7 @@ const PREVIOS = [
 export default function App() {
   const [activePrevio, setActivePrevio] = useState(PREVIOS[0].id);
   const [previo2Method, setPrevio2Method] = useState('fixed-point');
+  const [isManualsOpen, setIsManualsOpen] = useState(false);
   const [isTourOpen, setIsTourOpen] = useState(false);
   const [isTeamMenuOpen, setIsTeamMenuOpen] = useState(false);
   const teamMenuRef = useRef(null);
@@ -64,6 +66,19 @@ export default function App() {
   const previo = PREVIOS.find((item) => item.id === activePrevio) ?? PREVIOS[0];
   const activeTourKey = previo.id === 'previo-1' ? 'previo-1' : previo2Method;
 
+  const handleSelectPrevio = (previoId) => {
+    setActivePrevio(previoId);
+    setIsManualsOpen(false);
+  };
+
+  const handleToggleManuals = () => {
+    setIsManualsOpen((open) => {
+      const next = !open;
+      if (next) setIsTourOpen(false);
+      return next;
+    });
+  };
+
   return (
     <div className="mx-auto min-h-dvh w-full max-w-7xl px-4 py-5 sm:px-6 sm:py-6">
       {/* ---------------- Encabezado limpio con Previos centrados ---------------- */}
@@ -75,9 +90,13 @@ export default function App() {
               Métodos Numéricos · FESC 2026-2
             </p>
             <h1 className="mt-1 text-2xl font-bold tracking-tight text-slate-100 sm:text-[26px]">
-              {previo.title}
+              {isManualsOpen ? 'Manuales del Sistema' : previo.title}
             </h1>
-            <p className="mt-0.5 text-xs text-slate-400 sm:text-sm">{previo.subtitle}</p>
+            <p className="mt-0.5 text-xs text-slate-400 sm:text-sm">
+              {isManualsOpen
+                ? 'Manual de Usuario paso a paso y Manual Técnico de arquitectura y algoritmos'
+                : previo.subtitle}
+            </p>
           </div>
 
           {/* Centro: Selector de Previo centrado */}
@@ -86,14 +105,14 @@ export default function App() {
             className="no-print mx-auto grid w-full max-w-xs grid-cols-2 gap-1 rounded-xl border border-white/10 bg-white/[0.03] p-1 sm:w-72"
           >
             {PREVIOS.map((item) => {
-              const isActive = item.id === previo.id;
+              const isActive = !isManualsOpen && item.id === previo.id;
 
               return (
                 <button
                   key={item.id}
                   type="button"
                   aria-current={isActive ? 'page' : undefined}
-                  onClick={() => setActivePrevio(item.id)}
+                  onClick={() => handleSelectPrevio(item.id)}
                   className={`rounded-lg px-3 py-1.5 text-center transition-all active:scale-[0.98] ${
                     isActive
                       ? 'bg-gradient-to-r from-indigo-600 to-cyan-600 text-white shadow shadow-indigo-500/20'
@@ -109,11 +128,29 @@ export default function App() {
             })}
           </nav>
 
-          {/* Derecha: Botón Bombillo (Guía paso a paso) + Menú Hamburguesa del Equipo */}
+          {/* Derecha: Botón Libro (Manuales) + Botón Bombillo (Guía paso a paso) + Menú Hamburguesa */}
           <div className="no-print flex items-center justify-end gap-2 lg:justify-self-end">
             <button
               type="button"
-              onClick={() => setIsTourOpen((open) => !open)}
+              onClick={handleToggleManuals}
+              aria-pressed={isManualsOpen}
+              title={isManualsOpen ? 'Volver a las calculadoras' : 'Abrir Manual de Usuario y Manual Técnico'}
+              aria-label="Abrir Manual de Usuario y Manual Técnico"
+              className={`grid size-10 place-items-center rounded-xl border transition active:scale-95 ${
+                isManualsOpen
+                  ? 'border-indigo-400/60 bg-gradient-to-br from-indigo-600 to-cyan-600 text-white shadow-md shadow-indigo-500/25'
+                  : 'border-indigo-400/30 bg-indigo-500/10 text-indigo-300 hover:border-indigo-400/50 hover:bg-indigo-500/20'
+              }`}
+            >
+              <BookOpen className="size-4" aria-hidden="true" />
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                if (isManualsOpen) setIsManualsOpen(false);
+                setIsTourOpen((open) => !open);
+              }}
               aria-pressed={isTourOpen}
               title="Recorrido guiado paso a paso de esta calculadora"
               aria-label="Iniciar recorrido guiado paso a paso"
@@ -171,8 +208,10 @@ export default function App() {
         </div>
       </header>
 
-      {/* ---------------- Vista activa ---------------- */}
-      {previo.id === 'previo-1' ? (
+      {/* ---------------- Vista activa (Manuales o Calculadoras) ---------------- */}
+      {isManualsOpen ? (
+        <ManualsView onBack={() => setIsManualsOpen(false)} />
+      ) : previo.id === 'previo-1' ? (
         <Previo1View />
       ) : (
         <Previo2View activeMethod={previo2Method} onMethodChange={setPrevio2Method} />
