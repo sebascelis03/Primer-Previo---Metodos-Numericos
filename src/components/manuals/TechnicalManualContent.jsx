@@ -1,4 +1,4 @@
-import { Binary, Braces, Cpu, FolderTree, Layers, ShieldCheck, Sigma } from 'lucide-react';
+import { Binary, Braces, Cpu, FolderTree, Gauge, Layers, ShieldCheck, Sigma, Terminal } from 'lucide-react';
 
 /** Secciones del Manual Técnico para el índice de navegación lateral. */
 export const TECHNICAL_MANUAL_SECTIONS = [
@@ -7,6 +7,8 @@ export const TECHNICAL_MANUAL_SECTIONS = [
   { id: 'tm-parser', label: '3. Evaluador Matemático y AST' },
   { id: 'tm-lineales', label: '4. Motor Lineal 3×3 (Previo 1)' },
   { id: 'tm-nolineales', label: '5. Motor No Lineal y Bairstow' },
+  { id: 'tm-contratos', label: '6. Contratos API y Punto Flotante' },
+  { id: 'tm-complejidad', label: '7. Complejidad Big-O y Despliegue' },
 ];
 
 /**
@@ -396,6 +398,163 @@ cᵢ = bᵢ + r·cᵢ₊₁ + s·cᵢ₊₂`}
                 <span className="font-mono">|P(xᵢ)|</span> en aritmética compleja mediante el esquema de Horner.
               </li>
             </ol>
+          </div>
+        </div>
+      </section>
+
+      {/* ---------------- 6. Contratos de API, Umbrales y Estabilidad Numérica ---------------- */}
+      <section id="tm-contratos" className="card p-6 sm:p-7">
+        <div className="mb-4 flex items-center gap-3">
+          <span className="grid size-10 shrink-0 place-items-center rounded-xl border border-amber-500/25 bg-amber-500/10 text-amber-300">
+            <Gauge className="size-5" aria-hidden="true" />
+          </span>
+          <div>
+            <p className="text-[11px] font-semibold tracking-wider text-amber-300 uppercase">Sección 6</p>
+            <h2 className="text-lg font-bold text-slate-100 sm:text-xl">
+              Contratos de API, Umbrales Numéricos y Guardas de Punto Flotante
+            </h2>
+          </div>
+        </div>
+
+        <p className="text-sm leading-relaxed text-slate-300">
+          Los motores numéricos definen constantes de protección calibradas para aritmética IEEE 754 de 64 bits que evitan
+          bucles infinitos, divisiones por cero o falsas raíces complejas por ruido de redondeo:
+        </p>
+
+        <div className="mt-4 overflow-x-auto rounded-2xl border border-white/10">
+          <table className="w-full border-collapse text-left text-xs">
+            <thead className="bg-slate-800/90 text-[11px] font-bold tracking-wide text-slate-300 uppercase">
+              <tr>
+                <th className="px-4 py-2.5">Constante / Función</th>
+                <th className="px-4 py-2.5">Valor / Firma</th>
+                <th className="px-4 py-2.5">Propósito de Estabilidad Numérica</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-white/5 bg-slate-900/40 text-slate-300">
+              <tr>
+                <td className="px-4 py-2.5 font-mono font-bold text-indigo-300">DECIMALS / round6(v)</td>
+                <td className="px-4 py-2.5 font-mono">6 cifras (10⁶)</td>
+                <td className="px-4 py-2.5">
+                  Corrige el sesgo binario agregando <span className="font-mono">Number.EPSILON * Math.sign(v)</span> antes
+                  de redondear la salida final.
+                </td>
+              </tr>
+              <tr>
+                <td className="px-4 py-2.5 font-mono font-bold text-cyan-300">DERIVATIVE_STEP (h)</td>
+                <td className="px-4 py-2.5 font-mono">1 × 10⁻⁶</td>
+                <td className="px-4 py-2.5">
+                  Paso óptimo para diferencias finitas centrales: equilibra el error de truncamiento de Taylor{' '}
+                  <span className="font-mono">O(h²) ≈ 10⁻¹²</span> frente al error de cancelación sustractiva de máquina.
+                </td>
+              </tr>
+              <tr>
+                <td className="px-4 py-2.5 font-mono font-bold text-amber-300">ZERO_DERIVATIVE</td>
+                <td className="px-4 py-2.5 font-mono">1 × 10⁻¹²</td>
+                <td className="px-4 py-2.5">
+                  Umbral inferior para <span className="font-mono">|f′(xₖ)|</span> en Newton-Raphson; detiene la iteración
+                  cuando la tangente es horizontal.
+                </td>
+              </tr>
+              <tr>
+                <td className="px-4 py-2.5 font-mono font-bold text-purple-300">SINGULAR_DETERMINANT</td>
+                <td className="px-4 py-2.5 font-mono">1 × 10⁻¹⁴</td>
+                <td className="px-4 py-2.5">
+                  Si <span className="font-mono">|c₂² − c₁c₃| &lt; 10⁻¹⁴</span> en Bairstow, perturba{' '}
+                  <span className="font-mono">(r, s) ← (r+1, s+1)</span> hasta 3 veces para escapar del punto singular.
+                </td>
+              </tr>
+              <tr>
+                <td className="px-4 py-2.5 font-mono font-bold text-emerald-300">Guarda de Raíz Doble Real</td>
+                <td className="px-4 py-2.5 font-mono">|Dq| &lt; 10⁻¹⁰ · escala</td>
+                <td className="px-4 py-2.5">
+                  En <span className="font-mono">quadraticFactorRoots(r, s)</span>, si el discriminante{' '}
+                  <span className="font-mono">r² + 4s</span> deja un residuo negativo minúsculo (ej.{' '}
+                  <span className="font-mono">−10⁻¹³</span>) en una raíz doble real como <span className="font-mono">(x − 1)²</span>,
+                  se fuerza a <span className="font-mono">0</span> para no reportarla falsamente como compleja.
+                </td>
+              </tr>
+              <tr>
+                <td className="px-4 py-2.5 font-mono font-bold text-rose-300">DIVERGENCE_LIMIT</td>
+                <td className="px-4 py-2.5 font-mono">1 × 10¹²</td>
+                <td className="px-4 py-2.5">
+                  Corta inmediatamente cualquier sucesión cuyas aproximaciones superen <span className="font-mono">10¹²</span>{' '}
+                  o produzcan <span className="font-mono">NaN / Infinity</span>.
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      {/* ---------------- 7. Complejidad Algorítmica y Scripts de Despliegue ---------------- */}
+      <section id="tm-complejidad" className="card p-6 sm:p-7">
+        <div className="mb-4 flex items-center gap-3">
+          <span className="grid size-10 shrink-0 place-items-center rounded-xl border border-indigo-500/25 bg-indigo-500/10 text-indigo-300">
+            <Terminal className="size-5" aria-hidden="true" />
+          </span>
+          <div>
+            <p className="text-[11px] font-semibold tracking-wider text-indigo-300 uppercase">Sección 7</p>
+            <h2 className="text-lg font-bold text-slate-100 sm:text-xl">
+              Complejidad Algorítmica (Big-O), Scripts NPM y Despliegue PWA
+            </h2>
+          </div>
+        </div>
+
+        <div className="grid gap-4 lg:grid-cols-2">
+          <div className="overflow-x-auto rounded-2xl border border-white/10">
+            <table className="w-full border-collapse text-left text-xs">
+              <thead className="bg-slate-800/90 text-[11px] font-bold tracking-wide text-slate-300 uppercase">
+                <tr>
+                  <th className="px-3.5 py-2.5">Algoritmo / Módulo</th>
+                  <th className="px-3.5 py-2.5">Tiempo</th>
+                  <th className="px-3.5 py-2.5">Espacio</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-white/5 bg-slate-900/40 text-slate-300">
+                <tr>
+                  <td className="px-3.5 py-2 font-semibold text-indigo-300">Parser AST (compileExpression)</td>
+                  <td className="px-3.5 py-2 font-mono">O(L) una sola vez</td>
+                  <td className="px-3.5 py-2 font-mono">O(L) nodos</td>
+                </tr>
+                <tr>
+                  <td className="px-3.5 py-2 font-semibold text-indigo-300">Jacobi / Gauss-Seidel (3×3)</td>
+                  <td className="px-3.5 py-2 font-mono">O(K · N²) con N=3</td>
+                  <td className="px-3.5 py-2 font-mono">O(K) filas</td>
+                </tr>
+                <tr>
+                  <td className="px-3.5 py-2 font-semibold text-amber-300">Pivoteo findBestRowPermutation</td>
+                  <td className="px-3.5 py-2 font-mono">O(N! · N²) = 54 ops</td>
+                  <td className="px-3.5 py-2 font-mono">O(1)</td>
+                </tr>
+                <tr>
+                  <td className="px-3.5 py-2 font-semibold text-cyan-300">Punto Fijo / Newton-Raphson</td>
+                  <td className="px-3.5 py-2 font-mono">O(K · |AST|)</td>
+                  <td className="px-3.5 py-2 font-mono">O(K) filas</td>
+                </tr>
+                <tr>
+                  <td className="px-3.5 py-2 font-semibold text-purple-300">Bairstow con Deflación (grado n)</td>
+                  <td className="px-3.5 py-2 font-mono">O(n² · K)</td>
+                  <td className="px-3.5 py-2 font-mono">O(n · K)</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div className="rounded-2xl border border-white/10 bg-slate-900/50 p-4">
+            <h3 className="text-sm font-bold text-slate-100">Comandos de Entorno y Compilación</h3>
+            <pre className="mt-2.5 overflow-x-auto rounded-xl bg-slate-950/80 p-3 font-mono text-xs leading-relaxed text-emerald-300">
+{`# 1. Instalar dependencias (Node.js >= 20)
+npm install
+
+# 2. Servidor de desarrollo con HMR
+npm run dev
+
+# 3. Compilar bundle de producción + Service Worker PWA
+npm run build
+
+# 4. Previsualizar build de producción localmente
+npm run preview`}
+            </pre>
           </div>
         </div>
       </section>

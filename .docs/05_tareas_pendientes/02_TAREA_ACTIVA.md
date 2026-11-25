@@ -1,4 +1,4 @@
 # Tarea Activa
 
-- **Recién completado:** `PLAN_08_MANUALES_USUARIO_Y_TECNICO.md` — Botón de libro en el header y vista dedicada con Manual de Usuario y Manual Técnico detallados.
+- **Recién completado:** `PLAN_10_LIMPIEZA_CABECERA_MANUALES.md` — Eliminados el bloque "Documentación Oficial" y el botón PDF en `ManualsView.jsx`.
 - **Próximo paso:** En espera de validación del usuario.

@@ -79,6 +79,18 @@ export default function App() {
     });
   };
 
+  /** Permite saltar desde cualquier sección del Manual de Usuario directo a la calculadora explicada. */
+  const handleLaunchCalculator = (target) => {
+    if (target === 'previo-1') {
+      setActivePrevio('previo-1');
+    } else {
+      setActivePrevio('previo-2');
+      setPrevio2Method(target);
+    }
+    setIsManualsOpen(false);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   return (
     <div className="mx-auto min-h-dvh w-full max-w-7xl px-4 py-5 sm:px-6 sm:py-6">
       {/* ---------------- Encabezado limpio con Previos centrados ---------------- */}
@@ -210,7 +222,10 @@ export default function App() {
 
       {/* ---------------- Vista activa (Manuales o Calculadoras) ---------------- */}
       {isManualsOpen ? (
-        <ManualsView onBack={() => setIsManualsOpen(false)} />
+        <ManualsView
+          onBack={() => setIsManualsOpen(false)}
+          onLaunchCalculator={handleLaunchCalculator}
+        />
       ) : previo.id === 'previo-1' ? (
         <Previo1View />
       ) : (
