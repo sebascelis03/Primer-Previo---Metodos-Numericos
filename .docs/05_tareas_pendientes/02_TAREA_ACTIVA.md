@@ -1,4 +1,4 @@
 # Tarea Activa
 
-- **Recién completado:** `PLAN_03_EDITOR_INTERACTIVO_PHOTOMATH.md` — Pantalla matemática 2D interactiva con casillas `□` clicables, cursor en vivo y teclado Photomath de doble panel (plantillas + pad numérico).
-- **Próximo paso:** En espera de validación visual del usuario o del siguiente requerimiento para formular el `PLAN_04`.
+- **Recién completado:** `PLAN_04_APRENDIZAJE_PASO_A_PASO.md` — Modo aprendizaje paso a paso al hacer clic en cualquier iteración $k$ (Previo 1 y Previo 2), fórmulas despejadas y reordenamiento automático de filas en Previo 1.
+- **Próximo paso:** En espera de validación del usuario o nueva instrucción.

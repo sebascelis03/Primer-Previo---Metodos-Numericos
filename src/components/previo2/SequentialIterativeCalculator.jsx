@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { RefreshCw, TableProperties } from 'lucide-react';
+import { BookOpen, MousePointerClick, RefreshCw, TableProperties, X } from 'lucide-react';
 import CalculatorLayout from './CalculatorLayout.jsx';
 import { ActionRow, ExpressionField, NumberField, StopCriteriaFields } from './FormControls.jsx';
 import { ConvergenceCard, ErrorBanner, MethodEmptyState } from './ResultCards.jsx';
@@ -45,6 +45,7 @@ export default function SequentialIterativeCalculator() {
 
   const [result, setResult] = useState(null);
   const [errorMessage, setErrorMessage] = useState('');
+  const [selectedK, setSelectedK] = useState(null);
 
   const handleReset = () => {
     setGExpr('');
@@ -83,6 +84,7 @@ export default function SequentialIterativeCalculator() {
     }
 
     try {
+      setSelectedK(null);
       setResult({
         tolerance: tol,
         ...solveFixedPoint({ gExpr, x0: start, tol, maxIter: limit }),
@@ -187,6 +189,22 @@ export default function SequentialIterativeCalculator() {
               </div>
             </header>
 
+            <div className="flex items-center justify-between gap-2 border-b border-white/5 bg-slate-900/50 px-4 py-2 text-xs text-slate-400">
+              <span className="inline-flex items-center gap-1.5">
+                <MousePointerClick className="size-3.5 text-indigo-400" aria-hidden="true" />
+                Haz clic en cualquier iteración <strong className="text-slate-200">k</strong> para ver su reemplazo paso a paso.
+              </span>
+              {selectedK !== null ? (
+                <button
+                  type="button"
+                  onClick={() => setSelectedK(null)}
+                  className="text-[11px] font-semibold text-indigo-300 hover:text-indigo-200"
+                >
+                  Cerrar paso a paso
+                </button>
+              ) : null}
+            </div>
+
             <div className="scrollbar-slim max-h-[26rem] overflow-auto">
               <table className="w-full border-collapse font-mono text-xs sm:text-sm">
                 <thead className="sticky top-0 z-10 bg-slate-800/95 backdrop-blur">
@@ -199,29 +217,90 @@ export default function SequentialIterativeCalculator() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/5">
-                  {result.history.map((row) => (
-                    <tr
-                      key={row.k}
-                      className={`tabular transition-colors ${
-                        row.isConverged
-                          ? 'animate-converge border-l-2 border-emerald-400 bg-emerald-500/10 font-semibold'
-                          : 'odd:bg-white/[0.02] even:bg-transparent hover:bg-white/5'
-                      }`}
-                    >
-                      <th scope="row" className="px-3 py-2 text-left font-sans text-xs font-bold text-slate-400">
-                        {row.k}
-                      </th>
-                      <td className="px-3 py-2 text-right text-slate-200">{fmt(row.xk)}</td>
-                      <td className="px-3 py-2 text-right text-slate-200">{fmt(row.gxk)}</td>
-                      <td className="px-3 py-2 text-right text-slate-400">{fmt(row.delta)}</td>
-                      <td className={`px-3 py-2 text-right ${errorTone(row.error, result.tolerance)}`}>
-                        {fmtPercent(row.error)}
-                      </td>
-                    </tr>
-                  ))}
+                  {result.history.map((row) => {
+                    const isSelected = selectedK === row.k;
+                    return (
+                      <tr
+                        key={row.k}
+                        onClick={() => setSelectedK((prev) => (prev === row.k ? null : row.k))}
+                        title={`Ver desarrollo paso a paso de la iteración k = ${row.k}`}
+                        className={`cursor-pointer tabular transition-colors ${
+                          isSelected
+                            ? 'border-l-2 border-indigo-400 bg-indigo-500/20 font-semibold'
+                            : row.isConverged
+                              ? 'animate-converge border-l-2 border-emerald-400 bg-emerald-500/10 font-semibold hover:bg-emerald-500/15'
+                              : 'odd:bg-white/[0.02] even:bg-transparent hover:bg-white/10'
+                        }`}
+                      >
+                        <th scope="row" className="px-3 py-2 text-left font-sans text-xs font-bold text-slate-400">
+                          {row.k}
+                        </th>
+                        <td className="px-3 py-2 text-right text-slate-200">{fmt(row.xk)}</td>
+                        <td className="px-3 py-2 text-right text-slate-200">{fmt(row.gxk)}</td>
+                        <td className="px-3 py-2 text-right text-slate-400">{fmt(row.delta)}</td>
+                        <td className={`px-3 py-2 text-right ${errorTone(row.error, result.tolerance)}`}>
+                          {fmtPercent(row.error)}
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
+
+            {selectedK !== null && result.history[selectedK] ? (
+              <div className="animate-fade border-t border-indigo-500/30 bg-slate-900/90 p-4 sm:p-5">
+                {(() => {
+                  const row = result.history[selectedK];
+                  return (
+                    <>
+                      <div className="mb-3 flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-2">
+                          <BookOpen className="size-4 text-indigo-400" aria-hidden="true" />
+                          <h4 className="text-sm font-bold text-slate-100">
+                            Desarrollo paso a paso · Iteración k = {row.k} (Punto Fijo)
+                          </h4>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setSelectedK(null)}
+                          className="rounded-lg p-1 text-slate-400 hover:bg-white/10 hover:text-slate-200"
+                        >
+                          <X className="size-4" aria-hidden="true" />
+                        </button>
+                      </div>
+
+                      <div className="grid gap-2 font-mono text-xs">
+                        <div className="rounded-xl border border-white/10 bg-slate-950/60 p-3">
+                          <p className="font-sans text-[11px] font-semibold text-slate-400 uppercase">
+                            1. Evaluación en la función g(x)
+                          </p>
+                          <p className="mt-1 text-slate-200">
+                            x<sub>{row.k + 1}</sub> = g(x<sub>{row.k}</sub>) = g(
+                            <span className="text-indigo-300">{fmt(row.xk)}</span>) ={' '}
+                            <span className="font-bold text-emerald-300">{fmt(row.gxk)}</span>
+                          </p>
+                        </div>
+
+                        <div className="rounded-xl border border-white/10 bg-slate-950/60 p-3">
+                          <p className="font-sans text-[11px] font-semibold text-slate-400 uppercase">
+                            2. Desplazamiento y Error Relativo Porcentual
+                          </p>
+                          <p className="mt-1 text-slate-300">
+                            Δx = x<sub>{row.k + 1}</sub> − x<sub>{row.k}</sub> = {fmt(row.gxk)} − ({fmt(row.xk)}) ={' '}
+                            <span className="font-semibold text-slate-100">{fmt(row.delta)}</span>
+                          </p>
+                          <p className="mt-1 text-slate-300">
+                            εₐ = |({fmt(row.gxk)} − ({fmt(row.xk)})) / {fmt(row.gxk)}| × 100 ={' '}
+                            <span className="font-bold text-cyan-300">{fmtPercent(row.error)} %</span>
+                          </p>
+                        </div>
+                      </div>
+                    </>
+                  );
+                })()}
+              </div>
+            ) : null}
 
             <footer className="border-t border-white/10 bg-white/[0.02] px-4 py-3 text-xs text-slate-500 sm:px-5">
               Δx = g(xₖ) − xₖ mide el desplazamiento de cada paso; cuando tiende a cero la sucesión alcanzó el punto fijo.

@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Dna, Sigma, Superscript } from 'lucide-react';
+import { BookOpen, Dna, MousePointerClick, Sigma, Superscript, X } from 'lucide-react';
 import CalculatorLayout from './CalculatorLayout.jsx';
 import { ActionRow, NumberField, StopCriteriaFields } from './FormControls.jsx';
 import { ConvergenceCard, ErrorBanner, MethodEmptyState } from './ResultCards.jsx';
@@ -112,6 +112,7 @@ export default function BairstowCalculator() {
 
   const [result, setResult] = useState(null);
   const [errorMessage, setErrorMessage] = useState('');
+  const [selectedStep, setSelectedStep] = useState(null); // { factorIndex, k }
 
   /** Vista previa del polinomio, recalculada al editar cualquier coeficiente. */
   const preview = useMemo(() => {
@@ -183,6 +184,7 @@ export default function BairstowCalculator() {
     }
 
     try {
+      setSelectedStep(null);
       setResult({
         tolerance: parseField(tolerance),
         polynomial: formatPolynomial(values),
@@ -455,49 +457,158 @@ export default function BairstowCalculator() {
               </div>
 
               {factor.iterationsHistory.length > 0 ? (
-                <div className="scrollbar-slim max-h-[20rem] overflow-auto border-t border-white/10">
-                  <table className="w-full border-collapse font-mono text-xs sm:text-sm">
-                    <thead className="sticky top-0 z-10 bg-slate-800/95 backdrop-blur">
-                      <tr className="text-[11px] font-bold tracking-wide text-slate-400 uppercase">
-                        <th scope="col" className="px-3 py-2.5 text-left font-sans">k</th>
-                        <th scope="col" className="px-3 py-2.5 text-right font-sans">r</th>
-                        <th scope="col" className="px-3 py-2.5 text-right font-sans">s</th>
-                        <th scope="col" className="px-3 py-2.5 text-right font-sans">Δr</th>
-                        <th scope="col" className="px-3 py-2.5 text-right font-sans">Δs</th>
-                        <th scope="col" className="px-3 py-2.5 text-right font-sans">εr (%)</th>
-                        <th scope="col" className="px-3 py-2.5 text-right font-sans">εs (%)</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-white/5">
-                      {factor.iterationsHistory.map((row) => (
-                        <tr
-                          key={row.k}
-                          className={`tabular transition-colors ${
-                            row.isConverged
-                              ? 'animate-converge border-l-2 border-emerald-400 bg-emerald-500/10 font-semibold'
-                              : row.singular
-                                ? 'border-l-2 border-amber-400 bg-amber-500/10'
-                                : 'odd:bg-white/[0.02] even:bg-transparent hover:bg-white/5'
-                          }`}
-                        >
-                          <th scope="row" className="px-3 py-2 text-left font-sans text-xs font-bold text-slate-400">
-                            {row.k}
-                          </th>
-                          <td className="px-3 py-2 text-right text-slate-200">{fmt(row.r)}</td>
-                          <td className="px-3 py-2 text-right text-slate-200">{fmt(row.s)}</td>
-                          <td className="px-3 py-2 text-right text-slate-400">{fmt(row.dr)}</td>
-                          <td className="px-3 py-2 text-right text-slate-400">{fmt(row.ds)}</td>
-                          <td className={`px-3 py-2 text-right ${errorTone(row.errorR, result.tolerance)}`}>
-                            {fmtPercent(row.errorR)}
-                          </td>
-                          <td className={`px-3 py-2 text-right ${errorTone(row.errorS, result.tolerance)}`}>
-                            {fmtPercent(row.errorS)}
-                          </td>
+                <>
+                  <div className="flex items-center justify-between gap-2 border-t border-white/10 bg-slate-900/50 px-4 py-2 text-xs text-slate-400">
+                    <span className="inline-flex items-center gap-1.5">
+                      <MousePointerClick className="size-3.5 text-purple-400" aria-hidden="true" />
+                      Haz clic en cualquier iteración <strong className="text-slate-200">k</strong> para ver la doble división sintética y el sistema 2×2.
+                    </span>
+                    {selectedStep?.factorIndex === factor.factorIndex ? (
+                      <button
+                        type="button"
+                        onClick={() => setSelectedStep(null)}
+                        className="text-[11px] font-semibold text-purple-300 hover:text-purple-200"
+                      >
+                        Cerrar paso a paso
+                      </button>
+                    ) : null}
+                  </div>
+
+                  <div className="scrollbar-slim max-h-[20rem] overflow-auto border-t border-white/5">
+                    <table className="w-full border-collapse font-mono text-xs sm:text-sm">
+                      <thead className="sticky top-0 z-10 bg-slate-800/95 backdrop-blur">
+                        <tr className="text-[11px] font-bold tracking-wide text-slate-400 uppercase">
+                          <th scope="col" className="px-3 py-2.5 text-left font-sans">k</th>
+                          <th scope="col" className="px-3 py-2.5 text-right font-sans">r</th>
+                          <th scope="col" className="px-3 py-2.5 text-right font-sans">s</th>
+                          <th scope="col" className="px-3 py-2.5 text-right font-sans">Δr</th>
+                          <th scope="col" className="px-3 py-2.5 text-right font-sans">Δs</th>
+                          <th scope="col" className="px-3 py-2.5 text-right font-sans">εr (%)</th>
+                          <th scope="col" className="px-3 py-2.5 text-right font-sans">εs (%)</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                      </thead>
+                      <tbody className="divide-y divide-white/5">
+                        {factor.iterationsHistory.map((row) => {
+                          const isSelected =
+                            selectedStep?.factorIndex === factor.factorIndex && selectedStep?.k === row.k;
+                          return (
+                            <tr
+                              key={row.k}
+                              onClick={() =>
+                                setSelectedStep((prev) =>
+                                  prev?.factorIndex === factor.factorIndex && prev?.k === row.k
+                                    ? null
+                                    : { factorIndex: factor.factorIndex, k: row.k }
+                                )
+                              }
+                              title={`Ver doble división sintética y sistema 2×2 de k = ${row.k}`}
+                              className={`cursor-pointer tabular transition-colors ${
+                                isSelected
+                                  ? 'border-l-2 border-purple-400 bg-purple-500/20 font-semibold'
+                                  : row.isConverged
+                                    ? 'animate-converge border-l-2 border-emerald-400 bg-emerald-500/10 font-semibold hover:bg-emerald-500/15'
+                                    : row.singular
+                                      ? 'border-l-2 border-amber-400 bg-amber-500/10'
+                                      : 'odd:bg-white/[0.02] even:bg-transparent hover:bg-white/10'
+                              }`}
+                            >
+                              <th scope="row" className="px-3 py-2 text-left font-sans text-xs font-bold text-slate-400">
+                                {row.k}
+                              </th>
+                              <td className="px-3 py-2 text-right text-slate-200">{fmt(row.r)}</td>
+                              <td className="px-3 py-2 text-right text-slate-200">{fmt(row.s)}</td>
+                              <td className="px-3 py-2 text-right text-slate-400">{fmt(row.dr)}</td>
+                              <td className="px-3 py-2 text-right text-slate-400">{fmt(row.ds)}</td>
+                              <td className={`px-3 py-2 text-right ${errorTone(row.errorR, result.tolerance)}`}>
+                                {fmtPercent(row.errorR)}
+                              </td>
+                              <td className={`px-3 py-2 text-right ${errorTone(row.errorS, result.tolerance)}`}>
+                                {fmtPercent(row.errorS)}
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {selectedStep?.factorIndex === factor.factorIndex ? (
+                    (() => {
+                      const row = factor.iterationsHistory.find((item) => item.k === selectedStep.k);
+                      if (!row) return null;
+                      return (
+                        <div className="animate-fade border-t border-purple-500/30 bg-slate-900/90 p-4 sm:p-5">
+                          <div className="mb-3 flex items-center justify-between gap-2">
+                            <div className="flex items-center gap-2">
+                              <BookOpen className="size-4 text-purple-400" aria-hidden="true" />
+                              <h4 className="text-sm font-bold text-slate-100">
+                                Desarrollo paso a paso · Factor {factor.factorIndex} · Iteración k = {row.k}
+                              </h4>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => setSelectedStep(null)}
+                              className="rounded-lg p-1 text-slate-400 hover:bg-white/10 hover:text-slate-200"
+                            >
+                              <X className="size-4" aria-hidden="true" />
+                            </button>
+                          </div>
+
+                          <div className="grid gap-2.5 font-mono text-xs">
+                            <div className="rounded-xl border border-white/10 bg-slate-950/60 p-3">
+                              <p className="font-sans text-[11px] font-semibold text-slate-400 uppercase">
+                                1. Doble división sintética con r = {fmt(row.rPrev)} , s = {fmt(row.sPrev)}
+                              </p>
+                              <p className="mt-1 text-slate-300">
+                                Coeficientes <strong className="text-indigo-300">b</strong> (bₙ … b₀): [{row.bDesc.map((v) => fmt(v)).join(' , ')}]
+                              </p>
+                              <p className="mt-1 text-slate-300">
+                                Coeficientes <strong className="text-cyan-300">c</strong> (cₙ … c₁): [{row.cDesc.slice(0, -1).map((v) => fmt(v)).join(' , ')}]
+                              </p>
+                            </div>
+
+                            <div className="rounded-xl border border-white/10 bg-slate-950/60 p-3">
+                              <p className="font-sans text-[11px] font-semibold text-slate-400 uppercase">
+                                2. Sistema 2×2 para hallar Δr y Δs
+                              </p>
+                              <p className="mt-1 text-slate-200">
+                                ({fmt(row.c2)})·Δr + ({fmt(row.c3)})·Δs = −({fmt(row.b1)})
+                              </p>
+                              <p className="mt-0.5 text-slate-200">
+                                ({fmt(row.c1)})·Δr + ({fmt(row.c2)})·Δs = −({fmt(row.b0)})
+                              </p>
+                              <p className="mt-1.5 border-t border-white/5 pt-1.5 text-slate-300">
+                                Determinante D = c₂² − c₁·c₃ = ({fmt(row.c2)})² − ({fmt(row.c1)})·({fmt(row.c3)}) ={' '}
+                                <span className="font-bold text-purple-300">{fmt(row.determinant)}</span>
+                              </p>
+                              <p className="mt-1 text-slate-200">
+                                Δr = <span className="font-bold text-indigo-300">{fmt(row.dr)}</span>
+                                {'   ·   '}
+                                Δs = <span className="font-bold text-cyan-300">{fmt(row.ds)}</span>
+                              </p>
+                            </div>
+
+                            <div className="rounded-xl border border-white/10 bg-slate-950/60 p-3">
+                              <p className="font-sans text-[11px] font-semibold text-slate-400 uppercase">
+                                3. Actualización y errores relativos
+                              </p>
+                              <p className="mt-1 text-slate-200">
+                                r<sub>nuevo</sub> = {fmt(row.rPrev)} + ({fmt(row.dr)}) ={' '}
+                                <span className="font-bold text-emerald-300">{fmt(row.r)}</span>
+                                {'   →   '}εr = {fmtPercent(row.errorR)} %
+                              </p>
+                              <p className="mt-0.5 text-slate-200">
+                                s<sub>nuevo</sub> = {fmt(row.sPrev)} + ({fmt(row.ds)}) ={' '}
+                                <span className="font-bold text-emerald-300">{fmt(row.s)}</span>
+                                {'   →   '}εs = {fmtPercent(row.errorS)} %
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })()
+                  ) : null}
+                </>
               ) : null}
 
               {factor.note ? (

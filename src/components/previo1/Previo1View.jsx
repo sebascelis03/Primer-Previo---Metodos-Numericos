@@ -7,6 +7,7 @@ import DuelCard from './DuelCard.jsx';
 import EmptyState from './EmptyState.jsx';
 import {
   checkDiagonalDominance,
+  findBestRowPermutation,
   residual,
   solveGaussSeidel,
   solveJacobi,
@@ -57,11 +58,25 @@ export default function Previo1View() {
   const [results, setResults] = useState(null);
   const [errorMessage, setErrorMessage] = useState('');
 
-  /** Diagnóstico de dominancia diagonal, recalculado al editar la matriz. */
-  const diagnosis = useMemo(() => {
-    if (!areInputsValid(matrix, vector, initialGuess)) return null;
-    return checkDiagonalDominance(matrix.map((row) => row.map(toNumber)));
-  }, [matrix, vector, initialGuess]);
+  /** Diagnóstico de dominancia diagonal y sugerencia de reordenamiento, recalculados al editar la matriz. */
+  const matrixNum = useMemo(
+    () => (areInputsValid(matrix, vector, initialGuess) ? matrix.map((row) => row.map(toNumber)) : null),
+    [matrix, vector, initialGuess]
+  );
+  const vectorNum = useMemo(
+    () => (areInputsValid(matrix, vector, initialGuess) ? vector.map(toNumber) : null),
+    [matrix, vector, initialGuess]
+  );
+
+  const diagnosis = useMemo(() => (matrixNum ? checkDiagonalDominance(matrixNum) : null), [matrixNum]);
+  const permutationSuggestion = useMemo(() => (matrixNum ? findBestRowPermutation(matrixNum) : null), [matrixNum]);
+
+  const handleApplyPermutation = (order) => {
+    setMatrix((prev) => order.map((idx) => [...prev[idx]]));
+    setVector((prev) => order.map((idx) => prev[idx]));
+    setResults(null);
+    setErrorMessage('');
+  };
 
   const handleMatrixChange = (i, j, value) => {
     setMatrix((previous) => previous.map((row, ri) => (ri === i ? row.map((cell, ci) => (ci === j ? value : cell)) : row)));
@@ -167,7 +182,13 @@ export default function Previo1View() {
 
       {/* Panel de resultados */}
       <div className="flex flex-col gap-5">
-        <DominanceCard diagnosis={diagnosis} />
+        <DominanceCard
+          diagnosis={diagnosis}
+          matrixNum={matrixNum}
+          vectorNum={vectorNum}
+          suggestion={permutationSuggestion}
+          onApplyPermutation={handleApplyPermutation}
+        />
 
         {errorMessage ? (
           <div className="animate-rise flex items-start gap-3 rounded-2xl border border-rose-500/20 bg-rose-500/10 p-4 backdrop-blur-xl">
@@ -194,6 +215,9 @@ export default function Previo1View() {
             title="Método de Jacobi"
             subtitle="Desplazamientos simultáneos"
             accent="indigo"
+            isGaussSeidel={false}
+            matrixNum={matrixNum}
+            vectorNum={vectorNum}
             history={results.jacobi.history}
             summary={results.jacobi.summary}
             residualVector={results.jacobi.residualVector}
@@ -206,6 +230,9 @@ export default function Previo1View() {
             title="Método de Gauss-Seidel"
             subtitle="Desplazamientos sucesivos"
             accent="cyan"
+            isGaussSeidel={true}
+            matrixNum={matrixNum}
+            vectorNum={vectorNum}
             history={results.gaussSeidel.history}
             summary={results.gaussSeidel.summary}
             residualVector={results.gaussSeidel.residualVector}

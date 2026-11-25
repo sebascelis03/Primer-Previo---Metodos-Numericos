@@ -270,3 +270,83 @@ export function residual(A, b, x) {
     return round6(value);
   });
 }
+
+/** Permutaciones posibles de las 3 filas de un sistema 3×3. */
+const PERMUTATIONS_3 = [
+  [0, 1, 2],
+  [0, 2, 1],
+  [1, 0, 2],
+  [1, 2, 0],
+  [2, 0, 1],
+  [2, 1, 0],
+];
+
+/**
+ * Evalúa las 6 permutaciones posibles de las filas de A para encontrar un
+ * reordenamiento que logre dominancia diagonal estricta (o que elimine ceros
+ * en la diagonal maximizando el peso relativo de la diagonal principal).
+ *
+ * @param {number[][]} A matriz 3x3
+ * @returns {{ canImprove: boolean, achievesDominance: boolean, order: number[], label: string } | null}
+ */
+export function findBestRowPermutation(A) {
+  if (!Array.isArray(A) || A.length !== SIZE) return null;
+
+  const scorePermutation = (order) => {
+    let dominantRows = 0;
+    let hasZeroDiag = false;
+    let ratioScore = 0;
+
+    for (let i = 0; i < SIZE; i += 1) {
+      const row = A[order[i]];
+      const diag = Math.abs(row[i]);
+      let offSum = 0;
+      for (let j = 0; j < SIZE; j += 1) {
+        if (j !== i) offSum += Math.abs(row[j]);
+      }
+      if (diag === 0) {
+        hasZeroDiag = true;
+      } else {
+        if (diag > offSum) dominantRows += 1;
+        ratioScore += diag / (offSum + 1e-9);
+      }
+    }
+
+    return {
+      order,
+      hasZeroDiag,
+      dominantRows,
+      isDominant: !hasZeroDiag && dominantRows === SIZE,
+      ratioScore,
+    };
+  };
+
+  const current = scorePermutation([0, 1, 2]);
+  if (current.isDominant) return null;
+
+  let best = current;
+  for (const order of PERMUTATIONS_3.slice(1)) {
+    const candidate = scorePermutation(order);
+    if (candidate.hasZeroDiag && !best.hasZeroDiag) continue;
+    if (
+      (!candidate.hasZeroDiag && best.hasZeroDiag) ||
+      candidate.dominantRows > best.dominantRows ||
+      (candidate.dominantRows === best.dominantRows && candidate.ratioScore > best.ratioScore + 1e-6)
+    ) {
+      best = candidate;
+    }
+  }
+
+  const changed = best.order.some((rowIdx, i) => rowIdx !== i);
+  if (!changed || best.hasZeroDiag) return null;
+
+  const mapping = best.order.map((origIdx) => `F${origIdx + 1}`).join(', ');
+  return {
+    canImprove: true,
+    achievesDominance: best.isDominant,
+    order: best.order,
+    label: best.isDominant
+      ? `Reordenar filas (${mapping}) para lograr dominancia diagonal`
+      : `Reordenar filas (${mapping}) para despejar la diagonal`,
+  };
+}

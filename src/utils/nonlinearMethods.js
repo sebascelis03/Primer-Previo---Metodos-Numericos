@@ -467,6 +467,8 @@ export function solveBairstow({ coefficients, r0 = 0, s0 = 0, tol = 0.001, maxIt
     let singularTries = 0;
 
     for (let k = 1; k <= maxIter; k += 1) {
+      const rPrev = r;
+      const sPrev = s;
       const { b, c } = doubleSyntheticDivision(a, r, s);
       const determinant = c[2] * c[2] - c[1] * c[3];
 
@@ -476,6 +478,8 @@ export function solveBairstow({ coefficients, r0 = 0, s0 = 0, tol = 0.001, maxIt
         singularTries += 1;
         iterationsHistory.push({
           k,
+          rPrev,
+          sPrev,
           r,
           s,
           dr: Number.NaN,
@@ -484,6 +488,11 @@ export function solveBairstow({ coefficients, r0 = 0, s0 = 0, tol = 0.001, maxIt
           errorS: null,
           b0: b[0],
           b1: b[1],
+          bDesc: [...b].reverse(),
+          cDesc: [...c].reverse(),
+          c1: c[1],
+          c2: c[2],
+          c3: c[3],
           determinant,
           isConverged: false,
           singular: true,
@@ -514,6 +523,8 @@ export function solveBairstow({ coefficients, r0 = 0, s0 = 0, tol = 0.001, maxIt
 
       iterationsHistory.push({
         k,
+        rPrev,
+        sPrev,
         r,
         s,
         dr,
@@ -522,6 +533,11 @@ export function solveBairstow({ coefficients, r0 = 0, s0 = 0, tol = 0.001, maxIt
         errorS,
         b0: b[0],
         b1: b[1],
+        bDesc: [...b].reverse(),
+        cDesc: [...c].reverse(),
+        c1: c[1],
+        c2: c[2],
+        c3: c[3],
         determinant,
         isConverged: factorConverged,
         singular: false,
