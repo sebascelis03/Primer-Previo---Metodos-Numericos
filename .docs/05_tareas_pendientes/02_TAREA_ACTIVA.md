@@ -1,4 +1,4 @@
 # Tarea Activa
 
-- **Recién completado:** `PLAN_04_APRENDIZAJE_PASO_A_PASO.md` — Modo aprendizaje paso a paso al hacer clic en cualquier iteración $k$ (Previo 1 y Previo 2), fórmulas despejadas y reordenamiento automático de filas en Previo 1.
-- **Próximo paso:** En espera de validación del usuario o nueva instrucción.
+- **Recién completado:** `PLAN_06_HEADER_SOBRIO.md` — Header sobrio y limpio sin caja ni íconos/gradientes tipo plantilla IA en `src/App.jsx`.
+- **Próximo paso:** En espera de validación visual del usuario.
