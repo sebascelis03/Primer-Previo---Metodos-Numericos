@@ -2,23 +2,14 @@
  * Evaluador matemático seguro para expresiones de una variable.
  *
  * Implementa un analizador léxico y un parser de descenso recursivo que
- * construye un árbol sintáctico (AST). Ese mismo árbol se usa para dos fines:
+ * construye un árbol sintáctico (AST) con posiciones de carácter (start, end, caret).
+ * Ese mismo árbol se usa para dos fines:
  *
  *  1. Compilarlo a una función evaluable `f(x)` (motor numérico).
- *  2. Dibujarlo con notación matemática real en la vista previa de la interfaz.
+ *  2. Dibujarlo con notación matemática 2D interactiva estilo Photomath.
  *
  * No se usa `eval` ni `new Function`, por lo que ninguna cadena del usuario
  * llega al intérprete de JavaScript.
- *
- * Gramática soportada (de menor a mayor precedencia):
- *
- *   expression := term (('+' | '-') term)*
- *   term       := unary (('*' | '/') unary | unary)*      // producto implícito
- *   unary      := ('+' | '-') unary | power
- *   power      := primary ('^' unary)?                    // asociativo a derecha
- *   primary    := número | constante | variable
- *               | función '(' expression (',' expression)* ')'
- *               | '(' expression ')'
  */
 
 /**
@@ -112,8 +103,7 @@ const KNOWN_NAMES = [...Object.keys(FUNCTIONS), ...Object.keys(CONSTANTS), VARIA
 
 /** Texto de ayuda con la sintaxis admitida, reutilizable en la interfaz. */
 export const SYNTAX_HELP =
-  'Operadores: + − * / ^ · Funciones: sin, cos, tan, exp, ln, log10, sqrt, cbrt, nroot(x, n), abs · ' +
-  'Constantes: pi, e · Producto implícito: 2x, 3(x+1). Tab salta al siguiente recuadro vacío.';
+  'Haz clic directamente sobre cualquier casilla □ de la ecuación o usa Tab para saltar al siguiente hueco.';
 
 /**
  * Operadores admitidos. Incluye los signos tipográficos que suelen aparecer
@@ -150,7 +140,13 @@ function splitIdentifier(raw, at) {
     const digits = /^\d+/.exec(rest);
 
     if (digits) {
-      tokens.push({ type: 'number', value: Number(digits[0]), raw: digits[0], at: at + offset });
+      tokens.push({
+        type: 'number',
+        value: Number(digits[0]),
+        raw: digits[0],
+        at: at + offset,
+        end: at + offset + digits[0].length,
+      });
       offset += digits[0].length;
       continue;
     }
@@ -165,7 +161,12 @@ function splitIdentifier(raw, at) {
       );
     }
 
-    tokens.push({ type: 'name', value: rest.slice(0, name.length), at: at + offset });
+    tokens.push({
+      type: 'name',
+      value: rest.slice(0, name.length),
+      at: at + offset,
+      end: at + offset + name.length,
+    });
     offset += name.length;
   }
 
@@ -173,29 +174,30 @@ function splitIdentifier(raw, at) {
 }
 
 /**
- * Divide la expresión en tokens.
+ * Divide la expresión en tokens con sus rangos `[at, end]`.
  *
- * La coma actúa como separador decimal solo entre dos dígitos («2,5»); en
- * cualquier otro caso separa argumentos («nroot(x, 3)»). El punto y coma
- * siempre separa argumentos.
+ * Si la coma aparece dentro de una función multi-argumento como `nroot(8,3)`,
+ * siempre se trata como separador de argumentos y no como coma decimal.
  *
  * @param {string} source expresión original
- * @returns {Array<{type:'number'|'name'|'op'|'lparen'|'rparen'|'comma', value:string|number, raw?:string, at:number}>}
+ * @returns {Array<{type:'number'|'name'|'op'|'lparen'|'rparen'|'comma', value:string|number, raw?:string, at:number, end:number}>}
  */
 function tokenize(source) {
   const tokens = [];
+  const callStack = [];
   let index = 0;
+
+  const insideMultiArgCall = () =>
+    callStack.length > 0 && (ARITY[callStack[callStack.length - 1]] ?? 1) > 1;
 
   while (index < source.length) {
     const char = source[index];
 
-    // Espacios y separadores invisibles (incluye el espacio fino de los PDF).
     if (/\s/.test(char)) {
       index += 1;
       continue;
     }
 
-    // Números: admiten punto (o coma entre dígitos) y notación científica (1e-6).
     if (isDigit(char) || char === '.') {
       const start = index;
       let raw = '';
@@ -210,7 +212,13 @@ function tokenize(source) {
           hasSeparator = true;
           raw += '.';
           index += 1;
-        } else if (digit === ',' && !hasSeparator && isDigit(source[index - 1]) && isDigit(source[index + 1])) {
+        } else if (
+          digit === ',' &&
+          !hasSeparator &&
+          !insideMultiArgCall() &&
+          isDigit(source[index - 1]) &&
+          isDigit(source[index + 1])
+        ) {
           hasSeparator = true;
           raw += '.';
           index += 1;
@@ -219,8 +227,6 @@ function tokenize(source) {
         }
       }
 
-      // El exponente solo se consume si realmente va seguido de dígitos,
-      // para no confundir «2e-x» (producto por la constante e) con «2e-5».
       const match = /^[eE][+-]?\d+/.exec(source.slice(index));
       if (match) {
         raw += match[0];
@@ -231,11 +237,10 @@ function tokenize(source) {
       if (!Number.isFinite(value)) {
         throw new Error(`«${raw}» no es un número válido.`);
       }
-      tokens.push({ type: 'number', value, raw, at: start });
+      tokens.push({ type: 'number', value, raw, at: start, end: index });
       continue;
     }
 
-    // Identificadores: variable, constantes y nombres de función.
     if (isLetter(char)) {
       const start = index;
       let raw = '';
@@ -248,32 +253,35 @@ function tokenize(source) {
     }
 
     if (char === '(' || char === '[' || char === '{') {
-      tokens.push({ type: 'lparen', value: '(', at: index });
+      const prev = tokens[tokens.length - 1];
+      const fnName = prev && prev.type === 'name' ? String(prev.value).toLowerCase() : null;
+      callStack.push(fnName);
+      tokens.push({ type: 'lparen', value: '(', at: index, end: index + 1 });
       index += 1;
       continue;
     }
 
     if (char === ')' || char === ']' || char === '}') {
-      tokens.push({ type: 'rparen', value: ')', at: index });
+      if (callStack.length > 0) callStack.pop();
+      tokens.push({ type: 'rparen', value: ')', at: index, end: index + 1 });
       index += 1;
       continue;
     }
 
     if (char === ',' || char === ';') {
-      tokens.push({ type: 'comma', value: ',', at: index });
+      tokens.push({ type: 'comma', value: ',', at: index, end: index + 1 });
       index += 1;
       continue;
     }
 
-    // El doble asterisco de JavaScript se acepta como potencia.
     if (char === '*' && source[index + 1] === '*') {
-      tokens.push({ type: 'op', value: '^', at: index });
+      tokens.push({ type: 'op', value: '^', at: index, end: index + 2 });
       index += 2;
       continue;
     }
 
     if (OPERATORS[char]) {
-      tokens.push({ type: 'op', value: OPERATORS[char], at: index });
+      tokens.push({ type: 'op', value: OPERATORS[char], at: index, end: index + 1 });
       index += 1;
       continue;
     }
@@ -285,74 +293,76 @@ function tokenize(source) {
 }
 
 /**
- * Construye el árbol sintáctico a partir de los tokens.
- *
- * En modo estricto cualquier anomalía lanza un error descriptivo. En modo
- * tolerante (vista previa mientras se escribe) los operandos faltantes se
- * representan con nodos `slot` y los paréntesis sin cerrar se cierran solos.
- *
- * Nodos posibles:
- *   { type:'num', value, raw } · { type:'var' } · { type:'const', name }
- *   { type:'neg', arg } · { type:'bin', op, left, right, implicit? }
- *   { type:'call', name, args } · { type:'slot' }
- *
- * @param {Array} tokens salida de `tokenize`
- * @param {{ tolerant?: boolean }} [options]
- * @returns {{ tree: object, incomplete: boolean, malformed: boolean }}
+ * Construye el árbol sintáctico a partir de los tokens, anotando cada nodo con
+ * su rango de caracteres `{ start, end, caret }` en la cadena original `source`.
  */
-function parse(tokens, { tolerant = false } = {}) {
+function parse(tokens, { tolerant = false, sourceLength = 0 } = {}) {
   let position = 0;
   let incomplete = false;
   let malformed = false;
 
   const peek = () => tokens[position];
   const next = () => tokens[position++];
+  const prevEnd = () => (position > 0 ? tokens[position - 1].end : 0);
 
-  const slot = () => {
+  const slot = (atPosition = prevEnd()) => {
     incomplete = true;
-    return { type: 'slot' };
+    return { type: 'slot', start: atPosition, end: atPosition, caret: atPosition };
   };
 
-  /** true si el token actual puede iniciar un factor (producto implícito). */
   const startsFactor = () => {
     const token = peek();
     if (!token) return false;
     return token.type === 'number' || token.type === 'name' || token.type === 'lparen';
   };
 
-  /** Consume el paréntesis de cierre o, en modo tolerante, lo da por cerrado. */
   const expectClosing = (message) => {
     const closing = peek();
     if (closing && closing.type === 'rparen') {
       position += 1;
-      return;
+      return closing.end;
     }
     if (!tolerant) throw new Error(message);
     if (closing) malformed = true;
     else incomplete = true;
+    return prevEnd();
   };
 
-  const parseCall = (name) => {
+  const parseCall = (nameToken) => {
+    const name = String(nameToken.value);
     const lower = name.toLowerCase();
     const arity = ARITY[lower] ?? 1;
     const usage = arity === 2 ? `${lower}(x, n)` : `${lower}(x)`;
 
     if (!peek() || peek().type !== 'lparen') {
-      if (tolerant) return { type: 'call', name: lower, args: Array.from({ length: arity }, () => slot()) };
+      if (tolerant) {
+        return {
+          type: 'call',
+          name: lower,
+          args: Array.from({ length: arity }, () => slot(nameToken.end)),
+          start: nameToken.at,
+          end: nameToken.end,
+          caret: nameToken.end,
+        };
+      }
       throw new Error(`La función «${name}» requiere paréntesis, por ejemplo ${usage}.`);
     }
-    next();
+    const openToken = next();
 
     const args = [];
+    let slotAnchor = openToken.end;
+
     for (;;) {
       const token = peek();
       if (tolerant && (!token || token.type === 'rparen' || token.type === 'comma')) {
-        args.push(slot());
+        const caretPos = token ? token.at : slotAnchor;
+        args.push(slot(caretPos));
       } else {
         args.push(parseExpression());
       }
       if (peek() && peek().type === 'comma') {
-        next();
+        const commaToken = next();
+        slotAnchor = commaToken.end;
         continue;
       }
       break;
@@ -362,64 +372,90 @@ function parse(tokens, { tolerant = false } = {}) {
       if (!tolerant) {
         throw new Error(
           arity === 2
-            ? `La función «${name}» necesita dos argumentos separados por coma y espacio: ${usage}.`
+            ? `La función «${name}» necesita dos argumentos separados por coma: ${usage}.`
             : `La función «${name}» recibe un solo argumento, por ejemplo ${usage}.`
         );
       }
       if (args.length < arity) {
-        while (args.length < arity) args.push(slot());
+        while (args.length < arity) args.push(slot(prevEnd()));
       } else {
         malformed = true;
         args.length = arity;
       }
     }
 
-    expectClosing(`Falta el paréntesis de cierre de «${name}».`);
-    return { type: 'call', name: lower, args };
+    const endPos = expectClosing(`Falta el paréntesis de cierre de «${name}».`);
+    return {
+      type: 'call',
+      name: lower,
+      args,
+      start: nameToken.at,
+      end: endPos,
+      caret: args[0]?.caret ?? openToken.end,
+    };
   };
 
   const parsePrimary = () => {
     const token = peek();
 
     if (!token) {
-      if (tolerant) return slot();
+      if (tolerant) return slot(sourceLength || prevEnd());
       throw new Error('La expresión termina de forma inesperada: falta un operando.');
     }
 
     if (token.type === 'number') {
       next();
-      return { type: 'num', value: token.value, raw: token.raw ?? String(token.value) };
+      return {
+        type: 'num',
+        value: token.value,
+        raw: token.raw ?? String(token.value),
+        start: token.at,
+        end: token.end,
+        caret: token.end,
+      };
     }
 
     if (token.type === 'lparen') {
-      next();
+      const open = next();
       if (tolerant && peek() && peek().type === 'rparen') {
-        next();
-        return slot();
+        const close = next();
+        incomplete = true;
+        return {
+          type: 'slot',
+          start: open.at,
+          end: close.end,
+          caret: open.end,
+        };
       }
       const inner = parseExpression();
-      expectClosing('Falta un paréntesis de cierre «)».');
-      return inner;
+      const closeEnd = expectClosing('Falta un paréntesis de cierre «)».');
+      return {
+        ...inner,
+        start: open.at,
+        end: closeEnd,
+      };
     }
 
     if (token.type === 'name') {
-      next();
-      const name = String(token.value);
+      const nameToken = next();
+      const name = String(nameToken.value);
       const lower = name.toLowerCase();
 
-      if (lower === VARIABLE) return { type: 'var' };
-      if (Object.hasOwn(FUNCTIONS, lower)) return parseCall(name);
-      if (Object.hasOwn(CONSTANTS, lower)) return { type: 'const', name: lower };
+      if (lower === VARIABLE) {
+        return { type: 'var', start: nameToken.at, end: nameToken.end, caret: nameToken.end };
+      }
+      if (Object.hasOwn(FUNCTIONS, lower)) return parseCall(nameToken);
+      if (Object.hasOwn(CONSTANTS, lower)) {
+        return { type: 'const', name: lower, start: nameToken.at, end: nameToken.end, caret: nameToken.end };
+      }
 
       throw new Error(`Nombre desconocido: «${name}».`);
     }
 
-    // Operador binario, coma o paréntesis de cierre donde se esperaba un operando.
-    if (tolerant) return slot();
+    if (tolerant) return slot(token.at);
     throw new Error(`Se esperaba un número o una variable, pero se encontró «${token.value}».`);
   };
 
-  /** Potencia: asociativa a la derecha, con exponente unario (2^-1). */
   const parsePower = () => {
     const base = parsePrimary();
     const token = peek();
@@ -427,7 +463,15 @@ function parse(tokens, { tolerant = false } = {}) {
     if (token && token.type === 'op' && token.value === '^') {
       next();
       const exponent = parseUnary();
-      return { type: 'bin', op: '^', left: base, right: exponent };
+      return {
+        type: 'bin',
+        op: '^',
+        left: base,
+        right: exponent,
+        start: base.start,
+        end: exponent.end,
+        caret: exponent.caret ?? exponent.end,
+      };
     }
 
     return base;
@@ -437,9 +481,11 @@ function parse(tokens, { tolerant = false } = {}) {
     const token = peek();
 
     if (token && token.type === 'op' && (token.value === '-' || token.value === '+')) {
-      next();
+      const opToken = next();
       const operand = parseUnary();
-      return token.value === '-' ? { type: 'neg', arg: operand } : operand;
+      return opToken.value === '-'
+        ? { type: 'neg', arg: operand, start: opToken.at, end: operand.end, caret: operand.caret }
+        : operand;
     }
 
     return parsePower();
@@ -454,14 +500,30 @@ function parse(tokens, { tolerant = false } = {}) {
       if (token && token.type === 'op' && (token.value === '*' || token.value === '/')) {
         next();
         const right = parseUnary();
-        left = { type: 'bin', op: token.value, left, right };
+        left = {
+          type: 'bin',
+          op: token.value,
+          left,
+          right,
+          start: left.start,
+          end: right.end,
+          caret: right.caret,
+        };
         continue;
       }
 
-      // Producto implícito: 2x, 3(x+1), x(x−1), 2 sin(x).
       if (startsFactor()) {
         const right = parseUnary();
-        left = { type: 'bin', op: '*', left, right, implicit: true };
+        left = {
+          type: 'bin',
+          op: '*',
+          left,
+          right,
+          implicit: true,
+          start: left.start,
+          end: right.end,
+          caret: right.caret,
+        };
         continue;
       }
 
@@ -478,7 +540,15 @@ function parse(tokens, { tolerant = false } = {}) {
 
       next();
       const right = parseTerm();
-      left = { type: 'bin', op: token.value, left, right };
+      left = {
+        type: 'bin',
+        op: token.value,
+        left,
+        right,
+        start: left.start,
+        end: right.end,
+        caret: right.caret,
+      };
     }
   }
 
@@ -563,15 +633,6 @@ function compileNode(node) {
 
 /**
  * Compila una expresión en una función evaluable `f(x)`.
- *
- * El análisis se hace una sola vez: la función devuelta puede llamarse miles
- * de veces sin volver a recorrer el texto. Cualquier evaluación que produzca
- * un valor no finito lanza un error descriptivo.
- *
- * @param {string} expression texto de la expresión, por ejemplo 'x^3 - 2x - 5'
- * @param {string} [label='f(x)'] nombre usado en los mensajes de error
- * @returns {(x:number) => number} función evaluable
- * @throws {Error} si la expresión está vacía o su sintaxis es inválida
  */
 export function compileExpression(expression, label = 'f(x)') {
   const source = String(expression ?? '').trim();
@@ -611,10 +672,6 @@ export function compileExpression(expression, label = 'f(x)') {
 
 /**
  * Comprueba si una expresión es sintácticamente válida, sin evaluarla.
- * Útil para validar un campo mientras el usuario escribe.
- *
- * @param {string} expression
- * @returns {{ valid: boolean, message: string }}
  */
 export function checkExpression(expression) {
   const source = String(expression ?? '').trim();
@@ -629,21 +686,17 @@ export function checkExpression(expression) {
 }
 
 /**
- * Árbol sintáctico tolerante para la vista previa matemática.
- *
- * Nunca lanza errores de sintaxis por expresiones a medio escribir: los
- * operandos faltantes aparecen como nodos `slot` (recuadros por completar) y
- * los paréntesis abiertos se cierran solos.
- *
- * @param {string} expression
- * @returns {{ ast: object|null, incomplete: boolean, malformed: boolean, error: string }}
+ * Árbol sintáctico tolerante con rangos de posición para la vista interactiva Photomath.
  */
 export function parseExpressionAST(expression) {
-  const source = String(expression ?? '').trim();
-  if (source === '') return { ast: null, incomplete: true, malformed: false, error: '' };
+  const raw = String(expression ?? '');
+  if (raw.trim() === '') return { ast: null, incomplete: true, malformed: false, error: '' };
 
   try {
-    const { tree, incomplete, malformed } = parse(tokenize(source), { tolerant: true });
+    const { tree, incomplete, malformed } = parse(tokenize(raw), {
+      tolerant: true,
+      sourceLength: raw.length,
+    });
     return { ast: tree, incomplete, malformed, error: '' };
   } catch (error) {
     return { ast: null, incomplete: false, malformed: true, error: error.message };
@@ -654,11 +707,6 @@ export function parseExpressionAST(expression) {
  * Derivada numérica por diferencias finitas centrales:
  *
  *      f'(x) ≈ ( f(x + h) − f(x − h) ) / (2h)
- *
- * @param {(x:number) => number} f función ya compilada
- * @param {number} x punto de evaluación
- * @param {number} [h=1e-6] paso de la diferencia
- * @returns {number}
  */
 export function numericDerivative(f, x, h = 1e-6) {
   return (f(x + h) - f(x - h)) / (2 * h);

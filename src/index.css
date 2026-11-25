@@ -327,15 +327,65 @@
     font-size: 0.55em;
   }
 
-  /* Recuadro punteado: hueco por completar. */
+  /* Recuadro punteado: hueco por completar (estilo casilla Photomath). */
   .math-slot {
     display: inline-block;
-    width: 0.62em;
-    height: 0.85em;
-    margin: 0 0.06em;
+    width: 0.72em;
+    height: 0.92em;
+    margin: 0 0.08em;
     border: 1.5px dashed rgb(251 191 36 / 0.75);
+    border-radius: 4px;
+    background: rgb(251 191 36 / 0.1);
+    vertical-align: middle;
+    transition: all 0.15s ease;
+  }
+
+  .math-slot-interactive {
+    cursor: pointer;
+  }
+
+  .math-slot-interactive:hover {
+    border-color: rgb(34 211 238);
+    background: rgb(34 211 238 / 0.18);
+    transform: scale(1.06);
+  }
+
+  /* Casilla □ actualmente enfocada por el cursor del usuario. */
+  .math-slot-active {
+    border-style: solid;
+    border-color: rgb(34 211 238);
+    background: rgb(34 211 238 / 0.22);
+    box-shadow: 0 0 0 3px rgb(34 211 238 / 0.22);
+    animation: slot-pulse 1.3s ease-in-out infinite;
+  }
+
+  /* Números y variables clicables dentro de la ecuación 2D. */
+  .math-token-clickable {
+    cursor: text;
     border-radius: 3px;
-    background: rgb(251 191 36 / 0.08);
+    padding: 0 0.03em;
+    transition: background-color 0.12s ease;
+  }
+
+  .math-token-clickable:hover {
+    background-color: rgb(255 255 255 / 0.08);
+  }
+
+  /* Barra vertical parpadeante del cursor sobre el término activo en el display 2D. */
+  .math-token-caret {
+    position: relative;
+  }
+
+  .math-token-caret::after {
+    content: '';
+    position: absolute;
+    right: -1px;
+    top: 8%;
+    bottom: 8%;
+    width: 2px;
+    border-radius: 1px;
+    background-color: rgb(34 211 238);
+    animation: caret-blink 1s steps(2, start) infinite;
   }
 
   /* Teclas del teclado matemático. */
@@ -356,6 +406,11 @@
     font-size: 1.05rem;
   }
 
+  .math-key-num {
+    @apply bg-slate-800/80 font-mono text-base font-bold text-slate-100
+           hover:border-cyan-500/40 hover:bg-cyan-500/15;
+  }
+
   .math-key-op {
     @apply bg-slate-800/70 text-lg text-cyan-200;
     font-family: 'Cambria Math', 'STIX Two Math', 'Times New Roman', serif;
@@ -372,6 +427,26 @@
 
   .math-key-danger {
     @apply hover:border-rose-500/40 hover:bg-rose-500/15 hover:text-rose-200;
+  }
+}
+
+@keyframes slot-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 2px rgb(34 211 238 / 0.25);
+  }
+  50% {
+    box-shadow: 0 0 0 4px rgb(34 211 238 / 0.45);
+  }
+}
+
+@keyframes caret-blink {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0;
   }
 }
 

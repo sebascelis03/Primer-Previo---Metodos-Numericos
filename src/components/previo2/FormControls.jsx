@@ -1,5 +1,5 @@
 import { useMemo, useRef, useState } from 'react';
-import { Check, ChevronDown, CircleAlert, Eraser, FlaskConical, Keyboard, Lightbulb, Play } from 'lucide-react';
+import { Check, ChevronDown, CircleAlert, Code2, Eraser, FlaskConical, Keyboard, Lightbulb, Play } from 'lucide-react';
 import { checkExpression, parseExpressionAST, SYNTAX_HELP } from '../../utils/mathEvaluator.js';
 import { parseField } from './format.js';
 import MathPreview from './MathPreview.jsx';
@@ -24,34 +24,27 @@ function describeExpression(source) {
   if (tolerant.ast && tolerant.incomplete && !tolerant.malformed) {
     return {
       state: 'incomplete',
-      message: 'Expresión incompleta: llene los recuadros punteados (Tab salta al siguiente).',
+      message: 'Haz clic en la casilla □ iluminada (o pulsa Tab / "Casilla □") para completar la ecuación.',
     };
   }
 
   return { state: 'invalid', message: check.message };
 }
 
-const FIELD_TONE = {
-  empty: 'border-slate-700 focus-within:border-indigo-500 focus-within:ring-indigo-500/20',
-  valid: 'border-slate-700 focus-within:border-indigo-500 focus-within:ring-indigo-500/20',
-  incomplete: 'border-amber-500/50 focus-within:border-amber-400 focus-within:ring-amber-400/20',
-  invalid: 'border-rose-500/60 focus-within:border-rose-500 focus-within:ring-rose-500/20',
+const DISPLAY_TONE = {
+  empty: 'border-slate-700/80 bg-slate-900/70 focus-within:border-indigo-500 focus-within:ring-indigo-500/20',
+  valid: 'border-emerald-500/30 bg-slate-900/80 focus-within:border-indigo-400 focus-within:ring-indigo-500/20',
+  incomplete: 'border-amber-500/40 bg-slate-900/80 focus-within:border-amber-400 focus-within:ring-amber-400/20',
+  invalid: 'border-rose-500/50 bg-rose-950/20 focus-within:border-rose-500 focus-within:ring-rose-500/20',
 };
 
 /**
- * Campo para una expresión matemática con teclado visual, vista previa
- * renderizada en tiempo real, validación en vivo y ejemplos de un clic.
- *
- * @param {object} props
- * @param {string} props.id
- * @param {string} props.label etiqueta visible del campo
- * @param {string} props.prefix notación que precede al campo, p. ej. 'g(x) ='
- * @param {string} props.value
- * @param {(value:string) => void} props.onChange
- * @param {string} [props.placeholder]
- * @param {string[]} [props.examples] expresiones sugeridas
- * @param {string} [props.hint] texto de ayuda bajo el campo; por omisión, la sintaxis admitida
- * @param {boolean} [props.keypadDefaultOpen=true] el teclado matemático arranca desplegado
+ * Editor matemático visual estilo Photomath:
+ * - La pantalla principal muestra la ecuación 2D grande con casillas `□`
+ *   interactivas (clicables) y resalta en vivo el hueco o término donde está
+ *   el cursor del usuario.
+ * - Incluye una barra inferior integrada para edición directa con teclado
+ *   físico y navegación por casillas con `Tab`.
  */
 export function ExpressionField({
   id,
@@ -65,16 +58,20 @@ export function ExpressionField({
   keypadDefaultOpen = true,
 }) {
   const inputRef = useRef(null);
-  const selectionRef = useRef(null);
+  const selectionRef = useRef({ start: String(value ?? '').length, end: String(value ?? '').length });
+  const [caretPos, setCaretPos] = useState(String(value ?? '').length);
   const [isKeypadOpen, setIsKeypadOpen] = useState(keypadDefaultOpen);
 
   const text = String(value ?? '');
   const trimmed = text.trim();
   const status = useMemo(() => describeExpression(trimmed), [trimmed]);
 
-  /** Guarda la última selección conocida para insertar aunque el campo no tenga foco. */
-  const rememberSelection = (event) => {
-    selectionRef.current = { start: event.target.selectionStart ?? 0, end: event.target.selectionEnd ?? 0 };
+  /** Sincroniza la posición del cursor para iluminar la casilla □ activa en la ecuación 2D. */
+  const syncSelection = (event) => {
+    const start = event.target.selectionStart ?? 0;
+    const end = event.target.selectionEnd ?? start;
+    selectionRef.current = { start, end };
+    setCaretPos(start);
   };
 
   const readSelection = () => {
@@ -87,9 +84,10 @@ export function ExpressionField({
     return { start: Math.min(saved.start, text.length), end: Math.min(saved.end, text.length) };
   };
 
-  /** Ubica el cursor después de que React haya aplicado el nuevo valor. */
+  /** Ubica el cursor tanto en el input como en el visor matemático Photomath. */
   const placeCaret = (start, end = start) => {
     selectionRef.current = { start, end };
+    setCaretPos(start);
     requestAnimationFrame(() => {
       const input = inputRef.current;
       if (!input) return;
@@ -98,21 +96,20 @@ export function ExpressionField({
     });
   };
 
-  /** Aplica una transformación del teclado sobre el texto y la selección actuales. */
+  /** Aplica una acción del teclado visual sobre el texto y la selección actuales. */
   const applyEdit = (transform) => {
     const next = transform({ value: text, ...readSelection() });
     if (next.value !== text) onChange(next.value);
     placeCaret(next.start, next.end);
   };
 
-  /** Tab salta al siguiente recuadro vacío; si no queda ninguno, avanza el foco normalmente. */
+  /** Tab salta al siguiente recuadro vacío □. */
   const handleKeyDown = (event) => {
     if (event.key !== 'Tab' || event.shiftKey || event.altKey || event.ctrlKey || event.metaKey) return;
     const target = nextSlotPosition(text, event.currentTarget.selectionEnd ?? 0);
     if (target === null) return;
     event.preventDefault();
-    event.currentTarget.setSelectionRange(target, target);
-    selectionRef.current = { start: target, end: target };
+    placeCaret(target, target);
   };
 
   const handleExample = (example) => {
@@ -122,6 +119,7 @@ export function ExpressionField({
 
   return (
     <div>
+      {/* Cabecera del campo + botón de teclado */}
       <div className="mb-1.5 flex items-center justify-between gap-2">
         <label htmlFor={id} className="block text-xs font-semibold tracking-wide text-slate-400 uppercase">
           {label}
@@ -131,11 +129,11 @@ export function ExpressionField({
           onClick={() => setIsKeypadOpen((open) => !open)}
           aria-expanded={isKeypadOpen}
           aria-controls={`${id}-keypad`}
-          className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/5 px-2 py-1 text-[11px] font-semibold
+          className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/5 px-2.5 py-1 text-[11px] font-semibold
                      text-slate-300 transition hover:border-indigo-500/40 hover:bg-indigo-500/10 hover:text-indigo-200"
         >
           <Keyboard className="size-3.5" aria-hidden="true" />
-          {isKeypadOpen ? 'Ocultar teclado' : 'Teclado matemático'}
+          {isKeypadOpen ? 'Ocultar teclado' : 'Abrir teclado'}
           <ChevronDown
             className={`size-3.5 transition-transform ${isKeypadOpen ? 'rotate-180' : ''}`}
             aria-hidden="true"
@@ -143,60 +141,67 @@ export function ExpressionField({
         </button>
       </div>
 
-      {/* El prefijo vive en su propia celda, de modo que el campo siempre
-          empieza después de la notación por larga que esta sea. */}
+      {/* Pantalla unificada Photomath: Display 2D interactivo arriba + barra de entrada sincronizada abajo */}
       <div
-        className={`flex items-stretch overflow-hidden rounded-lg border bg-slate-800/60 transition focus-within:ring-2 ${
-          FIELD_TONE[status.state]
-        }`}
+        className={`overflow-hidden rounded-2xl border transition focus-within:ring-2 ${DISPLAY_TONE[status.state]}`}
       >
-        <span className="grid shrink-0 place-items-center border-r border-white/10 bg-slate-900/50 px-3 font-mono text-sm font-semibold text-indigo-300">
-          {prefix}
-        </span>
-        <input
-          ref={inputRef}
-          id={id}
-          type="text"
-          autoComplete="off"
-          spellCheck="false"
-          value={value}
-          placeholder={placeholder}
-          onChange={(event) => onChange(event.target.value)}
-          onKeyDown={handleKeyDown}
-          onSelect={rememberSelection}
-          onBlur={rememberSelection}
-          className={`min-w-0 flex-1 bg-transparent px-3 py-2.5 font-mono text-sm transition placeholder:text-slate-500
-                      focus:outline-none ${status.state === 'invalid' ? 'text-rose-200' : 'text-slate-100'}`}
-          aria-invalid={status.state === 'invalid'}
-          aria-describedby={`${id}-help`}
-        />
-      </div>
-
-      {/* Vista previa con notación matemática real */}
-      <div
-        className={`mt-2 rounded-xl border px-3.5 py-2 transition ${
-          status.state === 'valid'
-            ? 'border-emerald-500/20 bg-emerald-500/[0.04]'
-            : status.state === 'incomplete'
-              ? 'border-amber-500/20 bg-amber-500/[0.04]'
-              : 'border-white/10 bg-slate-950/40'
-        }`}
-      >
-        <p className="flex items-center justify-between gap-2 text-[10px] font-semibold tracking-wide text-slate-500 uppercase">
-          <span>Vista previa</span>
+        {/* Barra de estado del visor matemático */}
+        <div className="flex items-center justify-between gap-2 border-b border-white/5 bg-slate-950/40 px-3.5 py-1.5 text-[10px] font-semibold tracking-wide text-slate-400 uppercase">
+          <span>Ecuación interactiva · clic en cualquier □ para editar</span>
           {status.state === 'valid' ? (
             <span className="inline-flex items-center gap-1 text-emerald-400 normal-case">
               <Check className="size-3" aria-hidden="true" />
               Lista para calcular
             </span>
           ) : null}
-          {status.state === 'incomplete' ? <span className="text-amber-300 normal-case">Incompleta</span> : null}
-        </p>
-        <div className="text-slate-100">
-          <MathPreview expression={text} prefix={prefix} />
+          {status.state === 'incomplete' ? (
+            <span className="text-amber-300 normal-case">Completa las casillas □</span>
+          ) : null}
+          {status.state === 'invalid' ? (
+            <span className="text-rose-300 normal-case">Revisa la sintaxis</span>
+          ) : null}
+        </div>
+
+        {/* Display Matemático 2D (Protagonista principal tipo Photomath) */}
+        <div className="px-4 py-3 text-slate-100">
+          <MathPreview
+            expression={text}
+            prefix={prefix}
+            caretPosition={caretPos}
+            onSelectPosition={(pos) => placeCaret(pos, pos)}
+          />
+        </div>
+
+        {/* Barra de entrada sincronizada con teclado físico */}
+        <div className="flex items-center border-t border-white/10 bg-slate-950/60 px-3 py-1.5">
+          <Code2 className="mr-2 size-3.5 shrink-0 text-slate-500" aria-hidden="true" />
+          <span className="mr-2 shrink-0 font-mono text-xs font-semibold text-indigo-300/90">{prefix}</span>
+          <input
+            ref={inputRef}
+            id={id}
+            type="text"
+            autoComplete="off"
+            spellCheck="false"
+            value={value}
+            placeholder={placeholder}
+            onChange={(event) => {
+              onChange(event.target.value);
+              syncSelection(event);
+            }}
+            onKeyDown={handleKeyDown}
+            onKeyUp={syncSelection}
+            onClick={syncSelection}
+            onSelect={syncSelection}
+            onFocus={syncSelection}
+            className={`min-w-0 flex-1 bg-transparent font-mono text-xs transition placeholder:text-slate-600
+                        focus:outline-none ${status.state === 'invalid' ? 'text-rose-200' : 'text-slate-300'}`}
+            aria-invalid={status.state === 'invalid'}
+            aria-describedby={`${id}-help`}
+          />
         </div>
       </div>
 
+      {/* Mensaje de ayuda o error */}
       <div id={`${id}-help`}>
         {status.state === 'invalid' || status.state === 'incomplete' ? (
           <p
@@ -212,17 +217,19 @@ export function ExpressionField({
         ) : null}
       </div>
 
+      {/* Teclado Photomath de doble panel */}
       {isKeypadOpen ? (
         <div id={`${id}-keypad`} className="animate-fade mt-3">
           <MathKeypad onEdit={applyEdit} />
         </div>
       ) : null}
 
+      {/* Ejemplos renderizados en notación matemática */}
       {examples.length > 0 ? (
         <div className="mt-3">
           <p className="mb-1.5 flex items-center gap-1.5 text-[11px] font-semibold tracking-wide text-slate-500 uppercase">
             <Lightbulb className="size-3.5" aria-hidden="true" />
-            Ejemplos
+            Ejemplos rápidos
           </p>
           <div className="flex flex-wrap gap-1.5">
             {examples.map((example) => (
@@ -230,8 +237,8 @@ export function ExpressionField({
                 key={example}
                 type="button"
                 onClick={() => handleExample(example)}
-                title={`Usar ${example}`}
-                className="rounded-lg border border-white/10 bg-white/5 px-2.5 py-1 text-slate-200
+                title={`Cargar ${example}`}
+                className="rounded-xl border border-white/10 bg-white/5 px-2.5 py-1.5 text-slate-200
                            transition hover:border-indigo-500/40 hover:bg-indigo-500/10 hover:text-indigo-100 active:scale-95"
               >
                 <MathPreview expression={example} compact />
@@ -246,15 +253,6 @@ export function ExpressionField({
 
 /**
  * Campo numérico breve con validación visual.
- *
- * @param {object} props
- * @param {string} props.id
- * @param {string} props.label
- * @param {string} props.value
- * @param {(value:string) => void} props.onChange
- * @param {string} [props.hint]
- * @param {boolean} [props.integer=false] solo admite dígitos
- * @param {boolean} [props.allowEmpty=false] la cadena vacía no se marca como error
  */
 export function NumberField({ id, label, value, onChange, hint, integer = false, allowEmpty = false }) {
   const raw = String(value ?? '').trim();
@@ -282,15 +280,7 @@ export function NumberField({ id, label, value, onChange, hint, integer = false,
 }
 
 /**
- * Par de campos de corte (tolerancia y máximo de iteraciones) común a los
- * tres métodos.
- *
- * @param {object} props
- * @param {string} props.idPrefix prefijo para los identificadores de los campos
- * @param {string} props.tolerance
- * @param {string} props.maxIterations
- * @param {(value:string) => void} props.onToleranceChange
- * @param {(value:string) => void} props.onMaxIterationsChange
+ * Par de campos de corte (tolerancia y máximo de iteraciones) común a los tres métodos.
  */
 export function StopCriteriaFields({ idPrefix, tolerance, maxIterations, onToleranceChange, onMaxIterationsChange }) {
   return (
@@ -316,12 +306,6 @@ export function StopCriteriaFields({ idPrefix, tolerance, maxIterations, onToler
 
 /**
  * Fila de acciones: calcular, cargar ejemplo y limpiar.
- *
- * @param {object} props
- * @param {string} props.primaryLabel texto del botón principal
- * @param {() => void} props.onSolve
- * @param {() => void} props.onLoadExample
- * @param {() => void} props.onReset
  */
 export function ActionRow({ primaryLabel, onSolve, onLoadExample, onReset }) {
   return (
