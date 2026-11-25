@@ -1,5 +1,4 @@
 # Tarea Activa
 
-## Estado Actual
-- **Plan en ejecución / recién completado:** `PLAN_01_ESTRUCTURA_DOCUMENTAL.md` — Creación y consolidación de la estructura `.docs/` como Fuente Única de Verdad.
-- **Próximo paso:** En espera de las instrucciones del usuario para formular el **Plan de Implementación #2** según el siguiente requerimiento funcional o visual que desee abordar.
+- **Recién completado:** `PLAN_02_TECLADO_MATEMATICO_VISUAL.md` (pendiente de que el usuario lo valide visualmente con `npm run dev`).
+- **Próximo paso:** Esperando la siguiente instrucción del usuario para redactar el `PLAN_03`.

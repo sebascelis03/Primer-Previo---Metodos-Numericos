@@ -9,7 +9,7 @@
  */
 export default function CalculatorLayout({ inputs, results }) {
   return (
-    <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,26rem)_minmax(0,1fr)]">
+    <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,30rem)_minmax(0,1fr)]">
       <div className="scrollbar-slim no-print lg:sticky lg:top-6 lg:max-h-[calc(100dvh-3rem)] lg:overflow-y-auto lg:pr-1">
         {inputs}
       </div>

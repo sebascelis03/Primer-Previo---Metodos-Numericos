@@ -20,3 +20,4 @@ Resumen simplificado de los hitos y módulos completados hasta la fecha en el pr
     3. **Método de Bairstow** (raíces reales y complejas para polinomios de grado 2 a 5)
 - [x] **PLAN_01 — Estructura Documental `.docs/` (Fuente Única de Verdad):**
   - Creación de las 6 subcarpetas normativas en `.docs/`, consolidación de la documentación histórica/técnica y retiro de la carpeta antigua `docs/`.
+- [x] **PLAN_02 — Teclado matemático visual y vista previa en tiempo real (Previo 2):** teclado de escritorio con 3 pestañas, inserción en el cursor, Tab al siguiente recuadro y renderizado 2D (fracciones, radicales, exponentes).

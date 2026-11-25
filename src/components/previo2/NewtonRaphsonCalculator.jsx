@@ -170,6 +170,7 @@ export default function NewtonRaphsonCalculator() {
                 value={dfExpr}
                 onChange={setDfExpr}
                 placeholder="3x^2 - 2"
+                keypadDefaultOpen={false}
                 hint="Debe ser la derivada exacta de f(x); un error aquí desvía la convergencia."
               />
             </div>

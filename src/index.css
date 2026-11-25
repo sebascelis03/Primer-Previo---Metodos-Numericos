@@ -153,6 +153,228 @@
   }
 }
 
+/* ------------------------------------------------------------------------- */
+/* Notación matemática (vista previa en tiempo real y teclado visual)         */
+/* ------------------------------------------------------------------------- */
+@layer components {
+  .math-preview {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.45em 0.1em 0.3em;
+    font-family: 'Cambria Math', 'STIX Two Math', 'Latin Modern Math', 'Times New Roman', serif;
+    font-size: 1.35rem;
+    line-height: 1.15;
+    white-space: nowrap;
+  }
+
+  .math-preview-compact {
+    padding: 0;
+    font-size: 1em;
+  }
+
+  .math-row {
+    display: inline-flex;
+    align-items: center;
+  }
+
+  .math-lhs {
+    margin-right: 0.35em;
+    font-style: italic;
+    color: var(--color-indigo-300);
+  }
+
+  .math-var {
+    font-style: italic;
+  }
+
+  .math-num,
+  .math-const {
+    font-style: normal;
+  }
+
+  .math-fn {
+    font-style: normal;
+    margin-right: 0.06em;
+    color: var(--color-cyan-200);
+  }
+
+  .math-op {
+    margin: 0 0.24em;
+  }
+
+  .math-op-tight {
+    margin: 0 0.08em;
+  }
+
+  .math-thin {
+    width: 0.06em;
+  }
+
+  /* Exponente: se eleva por encima de su base sin alterar la línea. */
+  .math-sup {
+    display: inline-flex;
+    align-items: center;
+    align-self: flex-start;
+    margin-top: -0.42em;
+    margin-left: 0.04em;
+    font-size: 0.68em;
+  }
+
+  .math-sup-fn {
+    margin-right: 0.04em;
+  }
+
+  .math-sub {
+    align-self: flex-end;
+    margin-right: 0.06em;
+    margin-bottom: -0.28em;
+    font-size: 0.6em;
+  }
+
+  /* Fracción apilada con barra divisoria. */
+  .math-frac {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: stretch;
+    margin: 0 0.12em;
+  }
+
+  .math-frac .math-frac {
+    font-size: 0.9em;
+  }
+
+  .math-frac-num,
+  .math-frac-den {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 0.2em;
+  }
+
+  .math-frac-num {
+    padding-bottom: 0.08em;
+  }
+
+  .math-frac-den {
+    padding-top: 0.1em;
+    border-top: 1.5px solid currentColor;
+  }
+
+  /* Paréntesis que se estiran con su contenido. */
+  .math-fence {
+    align-self: stretch;
+    width: 0.3em;
+    min-height: 1.1em;
+    border: 0 solid currentColor;
+    flex-shrink: 0;
+  }
+
+  .math-fence-left {
+    margin-right: 0.04em;
+    border-left-width: 1.5px;
+    border-radius: 100% 0 0 100% / 50% 0 0 50%;
+  }
+
+  .math-fence-right {
+    margin-left: 0.04em;
+    border-right-width: 1.5px;
+    border-radius: 0 100% 100% 0 / 0 50% 50% 0;
+  }
+
+  /* Barras de valor absoluto. */
+  .math-bar {
+    align-self: stretch;
+    min-height: 1.1em;
+    margin: 0 0.1em;
+    border-left: 1.5px solid currentColor;
+  }
+
+  /* Radical: signo SVG estirable + barra superior sobre el radicando. */
+  .math-radical-sign {
+    position: relative;
+    align-self: stretch;
+    width: 0.62em;
+    min-height: 1.15em;
+    flex-shrink: 0;
+  }
+
+  .math-radical-sign svg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.5px;
+    stroke-linejoin: round;
+  }
+
+  .math-radicand {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.12em 0.15em 0 0.08em;
+    border-top: 1.5px solid currentColor;
+  }
+
+  .math-root-index {
+    position: relative;
+    z-index: 1;
+    display: inline-flex;
+    align-self: flex-start;
+    margin-right: -0.42em;
+    margin-top: -0.05em;
+    font-size: 0.55em;
+  }
+
+  /* Recuadro punteado: hueco por completar. */
+  .math-slot {
+    display: inline-block;
+    width: 0.62em;
+    height: 0.85em;
+    margin: 0 0.06em;
+    border: 1.5px dashed rgb(251 191 36 / 0.75);
+    border-radius: 3px;
+    background: rgb(251 191 36 / 0.08);
+  }
+
+  /* Teclas del teclado matemático. */
+  .math-key {
+    @apply inline-flex h-11 min-w-0 items-center justify-center gap-1.5 rounded-lg border border-white/10 bg-white/5
+           px-1.5 text-slate-100 transition
+           hover:border-indigo-500/40 hover:bg-indigo-500/15
+           active:scale-95;
+  }
+
+  .math-key .math-slot {
+    border-color: currentColor;
+    background: transparent;
+    opacity: 0.55;
+  }
+
+  .math-key-fn {
+    font-size: 1.05rem;
+  }
+
+  .math-key-op {
+    @apply bg-slate-800/70 text-lg text-cyan-200;
+    font-family: 'Cambria Math', 'STIX Two Math', 'Times New Roman', serif;
+  }
+
+  .math-key-var {
+    font-style: italic;
+    @apply text-slate-100;
+  }
+
+  .math-key-nav {
+    @apply bg-slate-800/70 text-xs font-semibold text-slate-300 hover:text-slate-100;
+  }
+
+  .math-key-danger {
+    @apply hover:border-rose-500/40 hover:bg-rose-500/15 hover:text-rose-200;
+  }
+}
+
 @layer utilities {
   /* Barra de desplazamiento discreta para la tabla de iteraciones. */
   .scrollbar-slim {

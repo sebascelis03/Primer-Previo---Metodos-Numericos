@@ -43,3 +43,15 @@ Registro histórico e incremental de las decisiones arquitectónicas, funcionale
 - **Decisiones Tomadas:**
   - Formalizar las 3 reglas operativas en `.docs/01_reglas/REGLAS_OPERATIVAS.md` (planificación obligatoria previa, cero comandos `git` ejecutados por el asistente, y política de compactación en `.docs/`).
   - Migrar y estructurar todo el conocimiento disperso de la carpeta antigua `docs/` hacia las 6 subcarpetas oficiales de `.docs/`, eliminando la carpeta antigua `docs/` para evitar duplicidad.
+
+---
+
+## Hito 5 — Teclado Matemático Visual y Vista Previa en Tiempo Real (`PLAN_02`)
+- **Fecha:** 24 de noviembre de 2026
+- **Decisiones:**
+  - El parser de `mathEvaluator.js` ahora genera un **AST** que sirve tanto para compilar `f(x)` como para dibujar la vista previa (lo que se ve es exactamente lo que se evalúa).
+  - Se mantuvo un renderizador propio (React + CSS) en lugar de KaTeX: no requiere dependencias nuevas y sigue funcionando 100 % offline.
+  - Modo tolerante del parser: los operandos faltantes se muestran como recuadros punteados (`slot`) y los paréntesis abiertos se cierran solos en la vista previa.
+  - Nuevas funciones: `cbrt(x)`, `nroot(x, n)` / `root(x, n)`. La coma es decimal solo entre dígitos (`2,5`); en otro caso separa argumentos (también se acepta `;`).
+  - Los identificadores pegados se separan solos (`pix` → `pi·x`, `x2` → `x·2`).
+  - Se agregó `src/components/previo2/mathEditing.js` (funciones puras de edición del cursor), un archivo que no estaba en el plan original.
